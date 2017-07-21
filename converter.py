@@ -34,13 +34,12 @@ def change_block(block, data, nbt):
 
     return block
 
-def to_113(command):
+def convert(command):
     global effect_id
     global color
     global facing
 
-    #try:
-    if True:
+    try:
 
         #Gamemode Selector
         command = re.sub(r'm=0',r'm=survival',command)
@@ -139,7 +138,7 @@ def to_113(command):
         command = re.sub(r'detect ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) ([a-zA-Z\:]+) ([0-9]+) /', r'detect \1 \2 \3 ', command)
 
         #Execute to "as"
-        command = re.sub(r'execute @([a-zA-Z])([A-Za-z0-9=\.,_\-\!\[\]]*) ([~0]+ [~0]+ [~0]+) (.*)(x=[0-9]+,y=[0-9]+,z=[0-9]+)', r'as @\1\2 \4\5', command)
+        command = re.sub(r'execute @([a-zA-Z])([A-Za-z0-9=\.,_\-\!\[\]]*) ([~0]+ [~0]+ [~0]+) (.*)(x=[0-9\.]+,y=[0-9\.]+,z=[0-9\.]+)', r'as @\1\2 \4\5', command)
         command = re.sub(r'execute @([a-zA-Z])([A-Za-z0-9=\.,_\-\!\[\]]*) ([~0]+ [~0]+ [~0]+) (.*)(~|dx=|dy=|dz=|c=|r=|rm=)', r'as @\1\2 at @s \4\5', command)
         command = re.sub(r'execute @([a-zA-Z])([A-Za-z0-9=\.,_\-\!\[\]]*) ([~0]+ [~0]+ [~0]+) ', r'as @\1\2 ', command)
         command = re.sub(r'execute @([a-zA-Z])([A-Za-z0-9=\.,_\-\!\[\]]*) ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) ', r'as @\1\2 at @s offset \3 ', command)
@@ -173,8 +172,8 @@ def to_113(command):
 
 
 
-    #except:
-    #    print("A command had an error")
+    except:
+        print("A command had an error")
 
     return command
 
@@ -183,24 +182,25 @@ if usenamespace.lower() in ["n","no","false","off"]:
     datapack = input("Datapack name: ")
 
 
-while True:
-    print(to_113(input()))
+#while True:
+#    print(to_113(input()))
 
-"""
 path = input("Path to functions file: ")
 
-print("Changing stuff")
+print("Converting functions")
 
 for path, dirs, files in os.walk(path):
-    for filename in files:
-        fullpath = os.path.join(path, filename)
+    for file in files:
+        if file.endswith(".mcfunction"):
+            fullpath = os.path.join(path, file)
 
-        memory = ""
+            memory = ""
 
-        with open(fullpath, 'r') as f:
-            for line in f:
-                memory += to_113(line)
+            with open(fullpath, 'r') as f:
+                for line in f:
+                    memory += convert(line)
 
-        with open(fullpath, 'w') as f:
-            f.write(memory)
-"""
+            with open(fullpath, 'w') as f:
+                f.write(memory)
+
+print("Done")
