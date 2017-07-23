@@ -3,9 +3,9 @@ import os
 
 
 #Set values
-effect_id = ['speed', 'slowness', 'haste', 'mining_fatigue', 'strength', 'instant_health', 'instant_damage', 'jump_boost', 'nausea', 'regeneration', 'resistance', 'fire_resistance', 'water_breathing', 'invisibility', 'blindness', 'night_vision', 'hunger', 'weakness', 'poison', 'wither', 'health_boost', 'absorption', 'saturation', 'glowing', 'levitation', 'luck', 'unluck']
-color = ["white","orange","magenta","light_blue","yellow","lime","pink","gray","silver","cyan","purple","blue","brown","green","red","black"]
-facing = ["north","north","north","south","west","east","north","north","north","south","west","east","north","north","north","south"]
+effect_id = ('speed', 'slowness', 'haste', 'mining_fatigue', 'strength', 'instant_health', 'instant_damage', 'jump_boost', 'nausea', 'regeneration', 'resistance', 'fire_resistance', 'water_breathing', 'invisibility', 'blindness', 'night_vision', 'hunger', 'weakness', 'poison', 'wither', 'health_boost', 'absorption', 'saturation', 'glowing', 'levitation', 'luck', 'unluck')
+color = ("white","orange","magenta","light_blue","yellow","lime","pink","gray","silver","cyan","purple","blue","brown","green","red","black")
+facing = ("north","north","north","south","west","east","north","north","north","south","west","east","north","north","north","south")
 
 def change_block(block, data, nbt):
     if data.isdigit():
@@ -18,14 +18,14 @@ def change_block(block, data, nbt):
         pass
 
     elif isinstance( data, int ):
-        if block in ["wool","stained_glass","stained_hardened_clay","concrete","concrete_powder","stained_glass_pane","carpet"]:
+        if block in ("wool","stained_glass","stained_hardened_clay","concrete","concrete_powder","stained_glass_pane","carpet"):
             block = "{0}_{1}".format(color[data], block)
-        elif block in ["chest","furnace","ladder","ender_chest"]:
+        elif block in ("chest","furnace","ladder","ender_chest"):
             block += "[facing={}]".format( facing[data] )
     else:
-        tmp = data.split("=")
-        if tmp[0] == "color":
-            block = "{0}_{1}".format(tmp[1], block)
+        arg = data.split("=")
+        if arg[0] == "color":
+            block = "{0}_{1}".format(arg[1], block)
         else:
             block += "[{}]".format(data)
 
@@ -39,7 +39,7 @@ def convert(command):
     global color
     global facing
 
-    if command[0] != "#":
+    if not command.startswith("#"):
         try:
 
             #Gamemode Selector
@@ -61,24 +61,45 @@ def convert(command):
             command = re.sub(r'difficulty (3|h)',r'difficulty hard',command)
 
 
-            #Int coordinates to .5
-            command = re.sub(r'(\,|\[)(x|y|z)=([0-9]+)(\,|\])',r'\1\2=\3.5\4',command)
-
+            
             #dx dy dz
             tmp = re.findall(r'@([a-z])\[([A-Za-z0-9=\.,_\-\!]*)\]', command)
             command = re.sub(r'@([a-z])\[([A-Za-z0-9=\.,_\-\!]*)\]', r'@\1[pl@ceh0ld3r]', command)
             for match in tmp:
-                tmp2 = match[1]
+                selector = match[1].split(",")
 
-                if any(i in tmp2 for i in ["dx","dy","dz"]):
+                if any(i in match[1] for i in ["dx","dy","dz"]):
                     if not "dx" in match[1]:
-                        tmp2 += ",dx=0"
+                        selector += ["dx=0"]
                     if not "dy" in match[1]:
-                        tmp2 += ",dy=0"
+                        selector += ["dy=0"]
                     if not "dz" in match[1]:
-                        tmp2 += ",dz=0"
+                        selector += ["dz=0"]
+                    
+                if "dx" in match[1]:
+                    
+                    for i in range(len(selector)):
+                        arg = selector[i].split("=")
+                        if arg[0] in ["dx","dy","dz"]:
+                            
+                            selector[i] = "{}={}".format(arg[0],int(arg[1]) + 1)
+    
+                else:
+                    #Int coordinates to floats if needed
+                    for i in range(len(selector)):
+                        arg = selector[i].split("=")
+                        if arg[0] in ["x","y","z"]:
+                            selector[i] = "{}={}".format(arg[0],float(arg[1]) + 0.5)
 
-                command = re.sub(r'pl@ceh0ld3r', tmp2, command, count=1)
+
+                
+                command = re.sub(r'pl@ceh0ld3r', ",".join(selector), command, count=1)
+
+
+
+
+            
+            
 
 
 
@@ -107,13 +128,13 @@ def convert(command):
                     command = re.sub(r'pl@ceh0ld3r', 'minecraft:' + effect_id[int(tmp[0][3]) - 1], command)
 
             #Function, advancement and loot table file locations
-            if usenamespace.lower() in ["y","yes","true","on"]:
+            if usenamespace.lower() in ("y","yes","true","on"):
                 command = re.sub(r'function ([A-Za-z_]+):([A-Za-z_/]+)', r'function \1:functions/\2', command)
                 command = re.sub(r'advancement (.*) ([A-Za-z_]+):([A-Za-z_/]+)', r'advancement \1 \2:advancements/\3', command)
                 command = re.sub(r'LootTable:"([A-Za-z_]+):([A-Za-z_/]+)"', r'LootTable:"\1:loot_tables/\2"', command)
 
 
-            elif usenamespace.lower() in ["n","no","false","off"]:
+            elif usenamespace.lower() in ("n","no","false","off"):
                 command = re.sub(r'function ([A-Za-z_]+):([A-Za-z_/]+)', r'function {}:functions/\1/\2'.format(datapack), command)
                 command = re.sub(r'advancement (.*) ([A-Za-z_]+):([A-Za-z_/]+)', r'advancement \1 {}:advancements/\2/\3'.format(datapack), command)
                 command = re.sub(r'LootTable:"([A-Za-z_]+):([A-Za-z_/]+)"', r'LootTable:"{}:loot_tables/\1/\2"'.format(datapack), command)
@@ -125,8 +146,8 @@ def convert(command):
 
 
                 #scoreboard players tag
-                tmp = re.findall(r'scoreboard players tag @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) (add|remove) ([\S]+) ([\S]+)', command)
-                command = re.sub(r'scoreboard players tag @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) (add|remove) ([\S]+) ([\S]+)', r'scoreboard players tag @\1pl@ceh0ld3r \3 \4', command)
+                tmp = re.findall(r'scoreboard players tag @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) (add|remove) ([\S]+) ({.*})', command)
+                command = re.sub(r'scoreboard players tag @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) (add|remove) ([\S]+) ({.*})', r'scoreboard players tag @\1pl@ceh0ld3r \3 \4', command)
                 if tmp:
                     if len(tmp[0][1]) > 0:
                     	command = re.sub(r'pl@ceh0ld3r', "[{0},nbt={1}]".format(tmp[0][1][1:-1], tmp[0][4]), command)
@@ -134,17 +155,18 @@ def convert(command):
                         command = re.sub(r'pl@ceh0ld3r', "[nbt={0}]".format(tmp[0][4]), command)
 
                 #scoreboard players set/add/remove
-                tmp = re.findall(r'scoreboard players (set|add|remove) @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) ([\S]+) ([0-9]+) ([\S]+)', command)
-                command = re.sub(r'scoreboard players (set|add|remove) @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) ([\S]+) ([0-9]+) ([\S]+)', r'scoreboard players \1 @\2pl@ceh0ld3r \4 \5', command)
+                tmp = re.findall(r'scoreboard players (set|add|remove) @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) ([\S]+) ([0-9]+) ({.*})', command)
+                command = re.sub(r'scoreboard players (set|add|remove) @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) ([\S]+) ([0-9]+) ({.*})', r'scoreboard players \1 @\2pl@ceh0ld3r \4 \5', command)
                 if tmp:
                     if len(tmp[0][2]) > 0:
                         command = re.sub(r'pl@ceh0ld3r', "[{0},nbt={1}]".format(tmp[0][2][1:-1], tmp[0][5]), command)
                     else:
                         command = re.sub(r'pl@ceh0ld3r', "[nbt={0}]".format(tmp[0][5]), command)
 
+            if "testfor" in command:
                 #testfor
-                tmp = re.findall(r'testfor @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) ([\S]+)', command)
-                command = re.sub(r'testfor @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) ([\S]+)', r'testfor @\2pl@ceh0ld3r', command)
+                tmp = re.findall(r'testfor @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) ({.*})', command)
+                command = re.sub(r'testfor @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) ({.*})', r'testfor @\1pl@ceh0ld3r', command)
                 if tmp:
                     if len(tmp[0][1]) > 0:
                         command = re.sub(r'pl@ceh0ld3r', "[{0},nbt={1}]".format(tmp[0][1][1:-1], tmp[0][2]), command)
@@ -155,13 +177,40 @@ def convert(command):
             command = re.sub(r'execute @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) /', r'execute @\1\2 \3 ', command)
             command = re.sub(r'detect ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) ([a-zA-Z\:]+) ([0-9]+) /', r'detect \1 \2 \3 ', command)
 
+            #Need to add more to here to optimize code that doesn't need this
             #Execute to "as"
+            tmp = re.findall(r'execute @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) ([~0]+ [~0]+ [~0]+) (.*)', command)
+            for match in tmp:
+                useas = True
+                useat = False
+                execute = match[3]
+                
+                if re.findall(r'(~|dx=|dy=|dz=|c=|r=|rm=)', execute):
+                    useat = True
+                elif re.findall(r'function ([a-z_]+):', execute):
+                    useat = True
+
+
+                
+                if re.findall(r'@s', execute):
+                    useas = True
+                    
+                if any(execute.startswith(i) for i in ("setblock","fill","clone","blockdata","summon")):
+                    useas = False
+
+                
+
+                if useas == False and useat == False and len(match[1]) > 0:
+                    useat = True
+            
             command = re.sub(r'execute @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) ([~0]+ [~0]+ [~0]+) (.*)(x=[0-9\.]+,y=[0-9\.]+,z=[0-9\.]+)', r'as @\1\2 \4\5', command)
             command = re.sub(r'execute @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) ([~0]+ [~0]+ [~0]+) (.*)(~|dx=|dy=|dz=|c=|r=|rm=)', r'as @\1\2 at @s \4\5', command)
             command = re.sub(r'execute @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) ([~0]+ [~0]+ [~0]+) ', r'as @\1\2 ', command)
             command = re.sub(r'execute @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) ', r'as @\1\2 at @s offset \3 ', command)
 
-            #New block data (Only for some blocks) for setblock, detect, fill
+
+
+            #Block states instead of data values (Only for some blocks). It will just copy states over if they were already used
             if "setblock" in command:
                 tmp = re.findall(r'setblock ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([\S]+)?(?: )?(destroy|keep|replace)?(?: )?(.+)?', command)
                 command = re.sub(r'setblock ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([\S]+)?(?: )?(destroy|keep|replace)?(?: )?(.+)?', r'setblock \1 minecraft:pl@ceh0ld3r \4', command)
@@ -173,6 +222,12 @@ def convert(command):
                 command = re.sub(r'detect ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([A-Za-z_]+) ([\S]+)', r'detect \1 minecraft:pl@ceh0ld3r', command)
                 if tmp:
                     command = re.sub(r'pl@ceh0ld3r', change_block(tmp[0][1], tmp[0][2], ""), command)
+
+            if "testforblock " in command:
+                tmp = re.findall(r'testforblock ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([\S]+)?(?: )?({[.*]})?', command)
+                command = re.sub(r'testforblock ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([\S]+)?(?: )?({[.*]})?', r'testforblock \1 minecraft:pl@ceh0ld3r', command)
+                if tmp:
+                    command = re.sub(r'pl@ceh0ld3r', change_block(tmp[0][1], tmp[0][2], tmp[0][3]), command)
 
             if "fill" in command:
                 #Fill replace
@@ -202,10 +257,10 @@ def convert(command):
     return command
 
 usenamespace = input("Use namespaces as datapack names? (y/n): ")
-if usenamespace.lower() in ["n","no","false","off"]:
+if usenamespace.lower() in ("n","no","false","off"):
     datapack = input("Datapack name: ")
 
-#This part is for testing
+#This part is for debugging
 #while True:
 #    print(convert(input()))
 
