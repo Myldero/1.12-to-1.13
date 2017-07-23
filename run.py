@@ -34,7 +34,7 @@ def change_block(block, data, nbt):
 
     return block
 
-def convert(command):
+def convert_command(command):
     global effect_id
     global color
     global facing
