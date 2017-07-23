@@ -34,7 +34,7 @@ def change_block(block, data, nbt):
 
     return block
 
-def convert(command):
+def convert_command(command):
     global effect_id
     global color
     global facing
@@ -326,7 +326,7 @@ for path, dirs, files in os.walk( os.path.join(path, "data", datapack, "function
 
             with open(fullpath, 'r') as f:
                 for line in f:
-                    memory += commands.convert(line)
+                    memory += convert_command(line)
 
             with open(fullpath, 'w') as f:
                 f.write(memory)
