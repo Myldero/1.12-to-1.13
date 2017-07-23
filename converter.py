@@ -1,6 +1,4 @@
 import re
-import os
-
 
 #Set values
 effect_id = ('speed', 'slowness', 'haste', 'mining_fatigue', 'strength', 'instant_health', 'instant_damage', 'jump_boost', 'nausea', 'regeneration', 'resistance', 'fire_resistance', 'water_breathing', 'invisibility', 'blindness', 'night_vision', 'hunger', 'weakness', 'poison', 'wither', 'health_boost', 'absorption', 'saturation', 'glowing', 'levitation', 'luck', 'unluck')
@@ -98,13 +96,6 @@ def convert(command):
 
 
 
-
-            
-            
-
-
-
-
             #Effect command
             if "effect" in command:
 
@@ -128,17 +119,15 @@ def convert(command):
                 if tmp:
                     command = re.sub(r'pl@ceh0ld3r', 'minecraft:' + effect_id[int(tmp[0][3]) - 1], command)
 
+
+
             #Function, advancement and loot table file locations
-            if usenamespace.lower() in ("y","yes","true","on"):
-                command = re.sub(r'function ([A-Za-z_]+):([A-Za-z_/]+)', r'function \1:functions/\2', command)
-                command = re.sub(r'advancement (.*) ([A-Za-z_]+):([A-Za-z_/]+)', r'advancement \1 \2:advancements/\3', command)
-                command = re.sub(r'LootTable:"([A-Za-z_]+):([A-Za-z_/]+)"', r'LootTable:"\1:loot_tables/\2"', command)
-
-
-            elif usenamespace.lower() in ("n","no","false","off"):
-                command = re.sub(r'function ([A-Za-z_]+):([A-Za-z_/]+)', r'function {}:functions/\1/\2'.format(datapack), command)
-                command = re.sub(r'advancement (.*) ([A-Za-z_]+):([A-Za-z_/]+)', r'advancement \1 {}:advancements/\2/\3'.format(datapack), command)
-                command = re.sub(r'LootTable:"([A-Za-z_]+):([A-Za-z_/]+)"', r'LootTable:"{}:loot_tables/\1/\2"'.format(datapack), command)
+            command = re.sub(r'function ([A-Za-z_]+):([A-Za-z_/]+)', r'function {}:functions/\1/\2'.format(datapack), command)
+            command = re.sub(r'advancement (.*) ([A-Za-z_]+):([A-Za-z_/]+)', r'advancement \1 {}:advancements/\2/\3'.format(datapack), command)
+            command = re.sub(r'LootTable:"([A-Za-z_]+):([A-Za-z_/]+)"', r'LootTable:"{}:loot_tables/\1/\2"'.format(datapack), command)
+            
+            command = re.sub(r'structure_block(.+)name:(?:")?([A-Za-z]+):([A-Za-z_/]+)(?:")?', r'structure_block\1name:"\2/\3"', command)
+            command = re.sub(r'structure_block(.+)name:(?:")?([A-Za-z_/]+)(?:")?', r'structure_block\1name:"{}:structures/\2"'.format(datapack), command)
 
 
 
@@ -290,32 +279,3 @@ def convert(command):
             print("A command had an error")
 
     return command
-
-usenamespace = input("Use namespaces as datapack names? (y/n): ")
-if usenamespace.lower() in ("n","no","false","off"):
-    datapack = input("Datapack name: ")
-
-#This part is for debugging
-#while True:
-#    print(convert(input()))
-
-    
-path = input("Path to functions file: ")
-
-print("Converting functions")
-
-for path, dirs, files in os.walk(path):
-    for file in files:
-        if file.endswith(".mcfunction"):
-            fullpath = os.path.join(path, file)
-
-            memory = ""
-
-            with open(fullpath, 'r') as f:
-                for line in f:
-                    memory += convert(line)
-
-            with open(fullpath, 'w') as f:
-                f.write(memory)
-
-print("Done")
