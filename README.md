@@ -2,7 +2,7 @@ Convert 1.12 mcfunctions to their 1.13 format
 
 The program is not finished but it will convert most of the commands and make your life easier when 1.13 comes out and changes everything
 
-It was made for Python 3.5
+It was made for Python 3.5 https://www.python.org/downloads/release/python-350/
 
 The program won't fix anything that doesn't already work in 1.12. There's a lot of heuristics in this but it does what it needs to do right.
 
