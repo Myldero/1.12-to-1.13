@@ -15,7 +15,6 @@ Example command:
 `as @s at @s offset ~ ~1 ~ detect ~ ~ ~ minecraft:stone setblock ~ ~1 ~ minecraft:chest[facing=south]{Items:[{id:"minecraft:stone"}]}`
 
 
-
 How to use:
 
 If you don't need to change anything within the actual map itself, you'll only need to install run.py and commands.py. When you have those installed, you can open run.py and type the path to the world into it. You also need to specify a name for the datapack that your files are going to be moved into.
