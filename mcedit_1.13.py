@@ -69,7 +69,7 @@ def change_block(block, data, nbt):
 
     return block
 
-def convert(command):
+def convert_command(command):
     global effect_id
     global color
     global facing
@@ -204,8 +204,9 @@ def convert(command):
             command = re.sub(r'execute @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) /', r'execute @\1\2 \3 ', command)
             command = re.sub(r'detect ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) ([a-zA-Z\:]+) ([0-9]+) /', r'detect \1 \2 \3 ', command)
 
-            #Need to add more to here to optimize code that doesn't need this
-            #Execute to "as"
+
+
+            #Execute to as and at. This also tries to optimize it a little
             tmp = re.findall(r'execute @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (.*)', command)
             for match in tmp:
                 execute = match[3]
@@ -222,7 +223,7 @@ def convert(command):
                 
                 if re.findall(r'(~|dx=|dy=|dz=|c=|r=|rm=)', execute):
                     useat = True
-                elif re.findall(r'function ([a-z_]+):', execute):
+                elif execute.startswith("function"):
                     useat = True
 
 
@@ -260,14 +261,8 @@ def convert(command):
                     else:
                         command = re.sub(r'execute @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) ', r'as @\1\2 at @s offset \3 ', command) #Same with offset
 
-                
-            
-            command = re.sub(r'execute @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) ([~0]+ [~0]+ [~0]+) (.*)(x=[0-9\.]+,y=[0-9\.]+,z=[0-9\.]+)', r'as @\1\2 \4\5', command)
-            command = re.sub(r'execute @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) ([~0]+ [~0]+ [~0]+) (.*)(~|dx=|dy=|dz=|c=|r=|rm=)', r'as @\1\2 at @s \4\5', command)
-            command = re.sub(r'execute @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) ([~0]+ [~0]+ [~0]+) ', r'as @\1\2 ', command)
+    
 
-            #This should stay
-            command = re.sub(r'execute @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) ', r'as @\1\2 at @s offset \3 ', command)
 
 
 
