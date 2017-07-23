@@ -61,7 +61,8 @@ def convert(command):
             command = re.sub(r'difficulty (3|h)',r'difficulty hard',command)
 
 
-            
+            #Probably what I need to do is to not change x y z if dx dy dz are included and then add 1 to dx dy dz to simulate how they work in 1.12
+
             #dx dy dz
             tmp = re.findall(r'@([a-z])\[([A-Za-z0-9=\.,_\-\!]*)\]', command)
             command = re.sub(r'@([a-z])\[([A-Za-z0-9=\.,_\-\!]*)\]', r'@\1[pl@ceh0ld3r]', command)
@@ -179,11 +180,19 @@ def convert(command):
 
             #Need to add more to here to optimize code that doesn't need this
             #Execute to "as"
-            tmp = re.findall(r'execute @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) ([~0]+ [~0]+ [~0]+) (.*)', command)
+            tmp = re.findall(r'execute @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (.*)', command)
             for match in tmp:
-                useas = True
-                useat = False
                 execute = match[3]
+                useas = True
+
+                if re.findall(r'([~0]+ [~0]+ [~0]+)', match[2]):
+                    offset = False
+                    useat = False
+                else:
+                    offset = True
+                    useat = True
+                
+
                 
                 if re.findall(r'(~|dx=|dy=|dz=|c=|r=|rm=)', execute):
                     useat = True
@@ -200,12 +209,38 @@ def convert(command):
 
                 
 
-                if useas == False and useat == False and len(match[1]) > 0:
+                if useas == False and useat == False and len(match[1]) > 2:
                     useat = True
+
+
+                
+                if useas == False and useat == False:
+                    command = re.sub(r'execute @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) ',r'', command) #Remove execute if it was only used for detecting a block for example
+                    
+                elif useas == True and useat == False:
+                    command = re.sub(r'execute @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) ', r'as @\1\2 ', command) #No at if relative coordinates weren't used
+
+                elif useas == False and useat == True:
+
+                    if offset == False:
+                        command = re.sub(r'execute @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) ', r'at @\1\2 ', command) #No at if relative coordinates weren't used
+                    else:
+                        command = re.sub(r'execute @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) ', r'at @\1\2 offset \3 ', command) #Same with offset
+                    
+                elif useas == True and useat == True:
+
+                    if offset == False:
+                        command = re.sub(r'execute @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) ', r'as @\1\2 at @s ', command) #Use everything. Not always needed but makes sure that it works for function commands for example.
+                    else:
+                        command = re.sub(r'execute @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) ', r'as @\1\2 at @s offset \3 ', command) #Same with offset
+
+                
             
             command = re.sub(r'execute @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) ([~0]+ [~0]+ [~0]+) (.*)(x=[0-9\.]+,y=[0-9\.]+,z=[0-9\.]+)', r'as @\1\2 \4\5', command)
             command = re.sub(r'execute @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) ([~0]+ [~0]+ [~0]+) (.*)(~|dx=|dy=|dz=|c=|r=|rm=)', r'as @\1\2 at @s \4\5', command)
             command = re.sub(r'execute @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) ([~0]+ [~0]+ [~0]+) ', r'as @\1\2 ', command)
+
+            #This should stay
             command = re.sub(r'execute @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) ', r'as @\1\2 at @s offset \3 ', command)
 
 
@@ -264,7 +299,7 @@ if usenamespace.lower() in ("n","no","false","off"):
 #while True:
 #    print(convert(input()))
 
-
+    
 path = input("Path to functions file: ")
 
 print("Converting functions")
