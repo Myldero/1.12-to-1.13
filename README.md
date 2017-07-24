@@ -11,11 +11,11 @@ It won't optimize your commands much either. You'll have to go through and chang
 #### Example command:
 
 ```sh
-execute @s ~ ~1 ~ detect ~ ~ ~ stone 0 setblock ~ ~1 ~ chest 3 {Items:[{id:"minecraft:stone"}]}
+execute @s ~ ~1 ~ detect ~ ~ ~ stone 0 setblock ~ ~1 ~ chest 3 replace {Items:[{Slot:0b,id:"minecraft:stone",Count:1b}]}
 ```
 
 ```sh
-as @s at @s offset ~ ~1 ~ detect ~ ~ ~ minecraft:stone setblock ~ ~1 ~ minecraft:chest[facing=south]{Items:[{id:"minecraft:stone"}]}
+as @s at @s offset ~ ~1 ~ detect ~ ~ ~ minecraft:stone setblock ~ ~1 ~ minecraft:chest[facing=south]{Items:[{Slot:0b,id:"minecraft:stone",Count:1b}]} replace
 ```
 
 ## How to use:
