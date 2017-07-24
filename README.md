@@ -1,4 +1,4 @@
-# Convert 1.12 mcfunctions to their 1.13 format
+# Convert 1.12 commands to their 1.13 format
 
 The program is supposed to update everything map-making related in your world automatically
 
