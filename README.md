@@ -1,6 +1,6 @@
 # Convert 1.12 commands to their 1.13 format
 
-The program is supposed to update everything map-making related in your world automatically
+The program is supposed to update everything map-making related in your world automatically. This includes functions, loot tables, advancements, and all their file locations
 
 It was made for Python 3.5 https://www.python.org/downloads/release/python-350/
 
@@ -23,7 +23,5 @@ as @s at @s offset ~ ~1 ~ detect ~ ~ ~ minecraft:stone setblock ~ ~1 ~ minecraft
 If you don't need to change anything within the actual map itself, you'll only need to install run.py. When you have that installed, you can open run.py and type the path to the world into it. You also need to specify a name for the datapack that your files are going to be moved into.
 
 If you want to use the MCEdit filter too (You'll usually want to run run.py first), you'll want to move mcedit_1.13.py into the stock-filters folder for mcedit. Once you've done that, you can open up MCEdit and select all the blocks you need filtered, select the datapack name that you used before, and then run it.
-
-If you've used a command like `setblock ~ ~ ~ stone 1`, then it will print an error message since a lot of data values aren't supported. You'll have to fix those manually.
 
 Remember that you also need to change the gameLoopFunction gamerule so it points to the new location of the function.
