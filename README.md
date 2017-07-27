@@ -25,3 +25,5 @@ If you don't need to change anything within the actual map itself, you'll only n
 If you want to use the MCEdit filter too (You'll usually want to run run.py first), you'll want to move mcedit_1.13.py into the stock-filters folder for mcedit. Once you've done that, you can open up MCEdit and select all the blocks you need filtered, select the datapack name that you used before, and then run it.
 
 Remember that you also need to change the gameLoopFunction gamerule so it points to the new location of the function.
+
+This is obviously untested as of now since 1.13 snapshots haven't come out yet so remember to create a backup of your world first!
