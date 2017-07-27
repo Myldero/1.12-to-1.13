@@ -1,5 +1,6 @@
 import os
 import shutil
+import json
 import re
 
 #Set values
@@ -15,11 +16,11 @@ def change_block(block, data, nbt):
     elif len(data) == 0:
         data = 0
 
-
+    #Block State
     if data in ['-1','*']:
         pass
 
-    elif isinstance( data, int ):
+    elif isinstance(data, int):
         if block in ("wool","stained_glass","stained_hardened_clay","concrete","concrete_powder","stained_glass_pane","carpet"):
             block = "{0}_{1}".format(color[data], block)
         elif block in ("chest","furnace","ladder","ender_chest","trapped_chest","wall_sign","wall_banner"):
@@ -29,11 +30,13 @@ def change_block(block, data, nbt):
         elif block == "leaves2":
             block = "{0}_leaves[{1}]".format( ("acacia","dark_oak")[data % 2], leaves[int(data / 4)] )
 
-        else:  
+        else:
             with open(r'.\blockstates.txt', 'r') as f:
                 for line in f:
-                    if line.startswith(block+":"): #Find block in blockstates.txt
-                        block += "[{}]".format(line.rstrip().split(":")[1].split(" ")[data]) #This basically finds the correct data file
+                    if re.findall(r'^{}:'.format(block), line): #Find block in blockstates.txt
+                        states = line.rstrip().split(":")[1].split(" ") #Gets list of block states
+                        if len(states[data % len(states)]) > 0:
+                            block += "[{}]".format(states[data % len(states)]) #This picks the correct block state
                         break
 
 
@@ -44,6 +47,8 @@ def change_block(block, data, nbt):
         else:
             block += "[{}]".format(data)
 
+
+    #NBT data
     if len(nbt) > 0:
         block += nbt
 
@@ -55,17 +60,21 @@ def convert_command(gets, filename):
     if not command.startswith("#"):
         try:
 
+            #Remove slash if the command starts with it (For command blocks)
+            if command.startswith("/"):
+                command = command[1:]
+
             #Gamemode Selector
-            command = re.sub(r'm=0',r'm=survival',command)
-            command = re.sub(r'm=1',r'm=creative',command)
-            command = re.sub(r'm=2',r'm=adventure',command)
-            command = re.sub(r'm=3',r'm=spectator',command)
+            command = re.sub(r'm=(!)?(0|s)',r'm=\1survival',command)
+            command = re.sub(r'm=(!)?(1|c)',r'm=\1creative',command)
+            command = re.sub(r'm=(!)?(2|a)',r'm=\1adventure',command)
+            command = re.sub(r'm=(!)?(3|sp)',r'm=\1spectator',command)
 
             #Gamemode
-            command = re.sub(r'gamemode 0',r'gamemode survival',command)
-            command = re.sub(r'gamemode 1',r'gamemode creative',command)
-            command = re.sub(r'gamemode 2',r'gamemode adventure',command)
-            command = re.sub(r'gamemode 3',r'gamemode spectator',command)
+            command = re.sub(r'gamemode (0|s)',r'gamemode survival',command)
+            command = re.sub(r'gamemode (1|c)',r'gamemode creative',command)
+            command = re.sub(r'gamemode (2|a)',r'gamemode adventure',command)
+            command = re.sub(r'gamemode (3|sp)',r'gamemode spectator',command)
 
             #Difficulty
             command = re.sub(r'difficulty (0|p)',r'difficulty peaceful',command)
@@ -136,11 +145,18 @@ def convert_command(gets, filename):
 
             #Function, advancement and loot table file locations
             command = re.sub(r'function ([A-Za-z_]+):([A-Za-z_/]+)', r'function {}:functions/\1/\2'.format(datapack), command)
-            command = re.sub(r'advancement (.*) ([A-Za-z_]+):([A-Za-z_/]+)', r'advancement \1 {}:advancements/\2/\3'.format(datapack), command)
-            command = re.sub(r'LootTable:"([A-Za-z_]+):([A-Za-z_/]+)"', r'LootTable:"{}:loot_tables/\1/\2"'.format(datapack), command)
-
-            command = re.sub(r'structure_block(.+)name:(?:")?([A-Za-z]+):([A-Za-z_/]+)(?:")?', r'structure_block\1name:"\2/\3"', command)
             command = re.sub(r'structure_block(.+)name:(?:")?([A-Za-z_/]+)(?:")?', r'structure_block\1name:"{}:structures/\2"'.format(datapack), command)
+
+            if re.findall(r'advancement (.*) minecraft:([A-Za-z_/]+)', command):
+                command = re.sub(r'advancement (.*) minecraft:([A-Za-z_/]+)', r'advancement \1 minecraft:advancements/\2', command)
+            else:
+                command = re.sub(r'advancement (.*) ([A-Za-z_]+):([A-Za-z_/]+)', r'advancement \1 {}:advancements/\2/\3'.format(datapack), command)
+
+            if re.findall(r'LootTable:"minecraft:([A-Za-z_/]+)"', command):
+                command = re.sub(r'LootTable:"minecraft:([A-Za-z_/]+)"', r'LootTable:"minecraft:loot_tables/\1"', command)
+            else:
+                command = re.sub(r'LootTable:"([A-Za-z_]+):([A-Za-z_/]+)"', r'LootTable:"{}:loot_tables/\1/\2"'.format(datapack), command)
+
 
 
 
@@ -266,8 +282,8 @@ def convert_command(gets, filename):
                     data = tmp[0][2]
                     if data == "":
                         data = "*"
-                        
-                        
+
+
                     command = re.sub(r'pl@ceh0ld3r', change_block(tmp[0][1], data, tmp[0][3]), command)
 
             if "fill" in command:
@@ -302,6 +318,39 @@ def convert_command(gets, filename):
 
 
 
+
+
+
+def convert_advancement(adv):
+    adv = json.loads(adv)
+    try:
+        if re.findall(r'minecraft:([A-Za-z_/]+)', adv['parent']):
+            adv['parent'] = re.sub(r'minecraft:([A-Za-z_/]+)', r'minecraft:advancements/\1', adv['parent'])
+        else:
+            adv['parent'] = re.sub(r'([A-Za-z_]+):([A-Za-z_/]+)', r'{}:advancements/\1/\2'.format(datapack), adv['parent'])
+    except:
+        pass
+
+    try:
+        adv['rewards']['function'] = re.sub(r'([A-Za-z_]+):([A-Za-z_/]+)', r'{}:functions/\1/\2'.format(datapack), adv['rewards']['function'])
+    except:
+        pass
+
+    try:
+        newloot = []
+        for loot in adv['rewards']['loot']:
+
+            if re.findall(r'minecraft:([A-Za-z_/]+)', loot):
+                newloot += [re.sub(r'minecraft:([A-Za-z_/]+)', r'minecraft:loot_tables/\1', loot)]
+            else:
+                newloot += [re.sub(r'([A-Za-z_]+):([A-Za-z_/]+)', r'{}:loot_tables/\1/\2'.format(datapack), loot)]
+
+        adv['rewards']['loot'] = newloot
+    except:
+        pass
+
+    
+    return json.dumps(adv, indent=4)
 
 
 
@@ -353,6 +402,24 @@ for path, dirs, files in os.walk( os.path.join(worldpath, "data", datapack, "fun
 
             with open(fullpath, 'w') as f:
                 f.write(memory)
+
+
+#Convert advancements
+print("Converting advancements")
+
+for path, dirs, files in os.walk( os.path.join(worldpath, "data", datapack, "advancements") ):
+    for file in files:
+        if file.endswith(".json"):
+            fullpath = os.path.join(path, file)
+
+            memory = ""
+
+            with open(fullpath, 'r') as f:
+                memory += convert_advancement(f.read())
+
+            with open(fullpath, 'w') as f:
+                f.write(memory)
+
 
 print("Done")
 input()
