@@ -65,10 +65,10 @@ def convert_command(gets, filename):
                 command = command[1:]
 
             #Gamemode Selector
-            command = re.sub(r'm=(!)?(0|s)',r'm=\1survival',command)
-            command = re.sub(r'm=(!)?(1|c)',r'm=\1creative',command)
-            command = re.sub(r'm=(!)?(2|a)',r'm=\1adventure',command)
-            command = re.sub(r'm=(!)?(3|sp)',r'm=\1spectator',command)
+            command = re.sub(r'(\[|\,)m=(!)?(0|s)',r'\1m=\2survival',command)
+            command = re.sub(r'(\[|\,)m=(!)?(1|c)',r'\1m=\2creative',command)
+            command = re.sub(r'(\[|\,)m=(!)?(2|a)',r'\1m=\2adventure',command)
+            command = re.sub(r'(\[|\,)m=(!)?(3|sp)',r'\1m=\2spectator',command)
 
             #Gamemode
             command = re.sub(r'gamemode (0|s)',r'gamemode survival',command)
@@ -349,7 +349,7 @@ def convert_advancement(adv):
     except:
         pass
 
-    
+
     return json.dumps(adv, indent=4)
 
 
@@ -382,6 +382,11 @@ try:
     shutil.move(os.path.join(worldpath, "structures"), os.path.join(worldpath, "data", datapack, "structures"))
 except:
     pass
+
+
+#Make pack.mcmeta file
+with open(os.path.join(worldpath, "data", datapack, "pack.mcmeta"), 'w+') as f:
+    f.write( json.dumps( {"pack": {"pack_format": 3, "description": datapack}} , indent=4) )
 
 
 #Convert functions
