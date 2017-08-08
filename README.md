@@ -15,7 +15,7 @@ execute @s ~ ~1 ~ detect ~ ~ ~ stone 0 setblock ~ ~1 ~ chest 3 replace {Items:[{
 ```
 
 ```sh
-as @s at @s offset ~ ~1 ~ detect ~ ~ ~ minecraft:stone setblock ~ ~1 ~ minecraft:chest[facing=south]{Items:[{Slot:0b,id:"minecraft:stone",Count:1b}]} replace
+execute at @s offset ~ ~1 ~ execute if block ~ ~ ~ minecraft:stone[variant=stone] setblock ~ ~1 ~ minecraft:chest[facing=south]{Items:[{Slot:0b,id:"minecraft:stone",Count:1b}] replace
 ```
 
 ## How to use:
