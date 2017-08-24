@@ -10,11 +10,11 @@ It will try to optimize your execute commands as much as possible but there migh
 
 #### Example command:
 
-```sh
+```
 execute @s ~ ~1 ~ detect ~ ~ ~ stone 0 setblock ~ ~1 ~ chest 3 replace {LootTable:"loot:chest"}
 ```
 
-```sh
+```
 execute offset ~ ~1 ~ if block ~ ~ ~ minecraft:stone[variant=stone] then setblock ~ ~1 ~ minecraft:chest[facing=south]{LootTable:"vg:loot_tables/loot/chest"} replace
 ```
 
