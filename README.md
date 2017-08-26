@@ -19,7 +19,7 @@ execute @s ~ ~1 ~ detect ~ ~ ~ stone 0 setblock ~ ~1 ~ chest 3 replace {LootTabl
 ```
 
 ```
-execute offset ~ ~1 ~ if block ~ ~ ~ minecraft:stone[variant=stone] then setblock ~ ~1 ~ minecraft:chest[facing=south]{LootTable:"vg:loot_tables/loot/chest"} replace
+execute offset ~ ~1 ~ if block ~ ~ ~ minecraft:stone[variant=stone] then setblock ~ ~1 ~ minecraft:chest[facing=south]{LootTable:"demo:loot_tables/loot/chest"} replace
 ```
 
 ## How to use:
