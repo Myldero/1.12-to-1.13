@@ -300,8 +300,7 @@ def get_executes(command):
 
 def convert_command(gets, filename):
 	command = gets
-	#try:
-	if True:
+	try:
 
 		#Toggledownfall to weather clear
 		command = re.sub(r'^toggledownfall', r'weather clear', command)
@@ -460,9 +459,9 @@ def convert_command(gets, filename):
 
 
 
-	#except:
-	#	print("[Error] Unknown error in {}".format(filename))
-	#	return gets
+	except:
+		print("[Error] Unknown error in {}".format(filename))
+		return gets
 
 
 	return command
