@@ -2,7 +2,7 @@
 
 The program is supposed to update everything map-making related in your world automatically. This includes functions, loot tables, advancements, and all their file locations
 
-It was made for Python 3.5 https://www.python.org/downloads/release/python-350/
+It was made for Python 3, which you can get from https://www.python.org/
 
 It will try to optimize your execute commands as much as possible but there might be cases where you can optimize it even more with the range of new possibilities in 1.13. (E.g. moving a scoreboard nbt command into the execute selector)
 
@@ -15,11 +15,11 @@ There might be problems with blocks if you used something like `detect ~ ~ ~ woo
 #### Example command:
 
 ```
-execute @s ~ ~1 ~ detect ~ ~ ~ stone 0 setblock ~ ~1 ~ chest 3 replace {LootTable:"loot:chest"}
+execute @s ~ ~1 ~ detect ~ ~ ~ stone 1 setblock ~ ~1 ~ chest 3 replace {LootTable:"loot:chest"}
 ```
 
 ```
-execute offset ~ ~1 ~ if block ~ ~ ~ minecraft:stone[variant=stone] then setblock ~ ~1 ~ minecraft:chest[facing=south]{LootTable:"demo:loot_tables/loot/chest"} replace
+execute offset ~ ~1 ~ if block ~ ~ ~ minecraft:granite then setblock ~ ~1 ~ minecraft:chest[facing=south]{LootTable:"demo:loot_tables/loot/chest"} replace
 ```
 
 ## How to use:
