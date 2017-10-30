@@ -24,9 +24,10 @@ execute offset ~ ~1 ~ if block ~ ~ ~ minecraft:granite then setblock ~ ~1 ~ mine
 
 ## How to use:
 
-Before opening up the world in 1.13, install the repository by clicking "Clone or download" and then "Download ZIP". Unzip the file and you're ready to run the program. With python 3 installed, open run.py and type the path to the world folder into it (E.g. /home/[username]/.minecraft/saves/[world] or C:\Users\\[username]\AppData\Roaming\\.minecraft\saves\\[world] ). You also need to specify a name for the datapack that your files are going to be moved into. The name can only contain lower case letters (a-z) and underscore. Hopefully there are no errors when you run it. If there aren't, you can go ahead and open up the world in 1.13. If there were errors or commands that haven't been converted correctly, you can report it in "Issues" and I'll do my best to fix it.
+If you want to use this by only running one command at a time and converting it, you can go to https://tech.io/snippet/MmJ6djt
 
-The MCEdit filter doesn't work yet because of an issue with Python 2.7 (The version MCEdit filters are written in) which I'll have to work around.
+Install the repository by clicking "Clone or download" and then "Download ZIP". Unzip the file and you're ready to run the program. With python 3 installed, open run.py and type the path to the world folder into it (E.g. /home/[username]/.minecraft/saves/[world] or C:\Users\\[username]\AppData\Roaming\\.minecraft\saves\\[world] ). You also need to specify a name and a namespace for the datapack that your files are going to be moved into. The namespace can only contain lower case letters (a-z) and underscore. Hopefully there are no errors when you run it. If there aren't, you can go ahead and open up the world in 1.13. If there were errors or commands that haven't been converted correctly, you can report it in "Issues" and I'll do my best to fix it.
 
+As you might know, this converter is based of the finished 1.13 so it won't work in the early snapshots.
 
-This is obviously untested as of now since 1.13 snapshots haven't come out yet so remember to create a backup of your world first!
+Always remember to create a backup of your world, since this converter isn't made to convert from 1.13 snapshots to 1.13, so if you want to use it, it's most likely best to wait a bit more for all the fancy features to come out.
