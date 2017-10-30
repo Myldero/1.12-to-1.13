@@ -81,6 +81,8 @@ def change_block(block, data="", nbt=""):
 def change_item(item, data, nbt):
 	if data.isdigit():
 		data = int(data)
+	elif data == '*':
+		data = -1
 	elif len(data) == 0:
 		data = 0
 
@@ -88,7 +90,7 @@ def change_item(item, data, nbt):
 		nbt = new_nbt(nbt)
 
 
-	if any(item.endswith(i) for i in ("sword","shovel","pickaxe","axe","flint_and_steel","helmet","chestplate","leggings","boots","bow","fishing_rod","shears")):
+	if data != -1 and any(item.endswith(i) for i in ("sword","shovel","pickaxe","hoe","axe","flint_and_steel","helmet","chestplate","leggings","boots","bow","fishing_rod","shears")):
 		item += "{Damage:"+str(data)
 
 		if len(nbt) > 0:
@@ -118,7 +120,7 @@ def get_item_nbt(nbt, nbt_type):
 		match_index = [i for i in range(1, len(nbt)-len(nbt_type)) if re.findall(r'(?:\{|\,|\[|^)' + nbt_type + r'{$', nbt[i-1:i+len(nbt_type)+1])][match_number]
 
 		par_index = 1
-		item_nbt = {'id': '', 'Damage': '0', 'tag': ''}
+		item_nbt = {'id': '', 'Damage': '*', 'tag': ''}
 		other_nbt = []
 
 		arg = ""
@@ -169,35 +171,37 @@ def get_item_nbt(nbt, nbt_type):
 		if re.findall(r'[a-z]$', item_nbt["Damage"]):
 			item_nbt["Damage"] = item_nbt["Damage"][:-1]
 
-		item_nbt["id"] = re.sub(r'^minecraft(?:\:)?([a-zA-Z_]+)', r'\1', item_nbt["id"])
+		if len(item_nbt["id"]) > 0:
+
+			item_nbt["id"] = re.sub(r'^minecraft(?:\:)?([a-zA-Z_]+)', r'\1', item_nbt["id"])
 
 
 
+			item, start_nbt, end_nbt = change_item(item_nbt["id"], item_nbt["Damage"], item_nbt["tag"]), match_index+len(nbt_type)+1, end_index
 
-		item, start_nbt, end_nbt = change_item(item_nbt["id"], item_nbt["Damage"], item_nbt["tag"]), match_index+len(nbt_type)+1, end_index
+			output_nbt = nbt[:start_nbt]
 
-		output_nbt = nbt[:start_nbt]
-
-		tmp_list = []
-
-
-		tag = re.findall(r'[a-z]({.*})$', item)
-		item = re.findall(r'(^[a-zA-Z_]+)', item)
-
-		if len(item) > 0:
-			tmp_list += ["id:\"minecraft:" + item[0] + "\""]
-
-		if len(tag) > 0:
-			tmp_list += ["tag:" + tag[0]]
+			tmp_list = []
 
 
-		if len(other_nbt) > 0:
-			tmp_list += [",".join(other_nbt)]
+			tag = re.findall(r'[a-z]({.*})$', item)
+			item = re.findall(r'(^[a-zA-Z_]+)', item)
 
-		if len(tmp_list) > 0:
-			output_nbt += ",".join(tmp_list)
+			if len(item) > 0:
+				tmp_list += ["id:\"minecraft:" + item[0] + "\""]
 
-		nbt = output_nbt + nbt[end_nbt:]
+			if len(tag) > 0:
+				tmp_list += ["tag:" + tag[0]]
+
+
+			if len(other_nbt) > 0:
+				tmp_list += [",".join(other_nbt)]
+
+			if len(tmp_list) > 0:
+				output_nbt += ",".join(tmp_list)
+
+			nbt = output_nbt + nbt[end_nbt:]
+
 
 	return nbt
 
@@ -247,6 +251,25 @@ def get_nbt_list(nbt, nbt_type):
 
 				nbt_list[i] = get_item_nbt("{Item:" + nbt_list[i] + "}", "Item:")[6:-1]
 
+		elif nbt_type in ("CanDestroy:","CanPlaceOn:"):
+
+			for i in range(len(nbt_list)):
+
+				block = re.findall(r'(?:minecraft:)?([a-z_]+)',nbt_list[i])[0]
+
+				with open(os.path.join(".", "blockstates.txt"), 'r') as f:
+					for line in f:
+						if re.findall(r'^{}:'.format(block), line): #Find block in blockstates.txt
+
+							states = ["minecraft:"+i for i in set(re.findall(r'(?:\:| )([a-z_]+)', line))]
+
+							nbt_list[i] = "\"" + "\",\"".join(states) + "\""
+
+
+
+
+							
+
 
 
 		start_nbt, end_nbt = match_index+len(nbt_type)+1, end_index
@@ -258,16 +281,18 @@ def get_nbt_list(nbt, nbt_type):
 
 		nbt = output_nbt + nbt[end_nbt:]
 
+
 	return nbt
 
 def new_nbt(nbt):
-
 	for i in ["HandItems:","Items:","ArmorItems:","Inventory:","EnderItems:"]:
 		nbt = get_nbt_list(nbt, i)
 
 	for i in ["Item:","buy:","sell:","SaddleItem:","SelectedItem:"]:
 		nbt = get_item_nbt(nbt, i)
 
+	for i in ["CanPlaceOn:","CanDestroy:"]:
+		nbt = get_nbt_list(nbt, i)
 	return nbt
 
 
@@ -300,7 +325,8 @@ def get_executes(command):
 
 def convert_command(gets, filename):
 	command = gets
-	try:
+	#try:
+	if True:
 
 		#Toggledownfall to weather clear
 		command = re.sub(r'^toggledownfall', r'weather clear', command)
@@ -383,18 +409,18 @@ def convert_command(gets, filename):
 
 
 		#Function, advancement and loot table file locations
-		command = re.sub(r'^function ([A-Za-z_]+):([A-Za-z_/]+)', r'function {}:functions/\1/\2'.format(datapack), command)
-		command = re.sub(r'structure_block(.+)name:(?:")?([A-Za-z_/]+)(?:")?', r'structure_block\1name:"{}:structures/\2"'.format(datapack), command)
+		command = re.sub(r'^function ([A-Za-z_]+):([A-Za-z_/]+)', r'function {}:\1/\2'.format(datapack), command)
+		command = re.sub(r'structure_block(.+)name:(?:")?([A-Za-z_/]+)(?:")?', r'structure_block\1name:"{}:\2"'.format(datapack), command)
 
 		if re.findall(r'^advancement (.*) minecraft:([A-Za-z_/]+)', command):
-			command = re.sub(r'^advancement (.*) minecraft:([A-Za-z_/]+)', r'advancement \1 minecraft:advancements/\2', command)
+			command = re.sub(r'^advancement (.*) minecraft:([A-Za-z_/]+)', r'advancement \1 minecraft:\2', command)
 		else:
-			command = re.sub(r'^advancement (.*) ([A-Za-z_]+):([A-Za-z_/]+)', r'advancement \1 {}:advancements/\2/\3'.format(datapack), command)
+			command = re.sub(r'^advancement (.*) ([A-Za-z_]+):([A-Za-z_/]+)', r'advancement \1 {}:\2/\3'.format(datapack), command)
 
 		if re.findall(r'LootTable:"minecraft:([A-Za-z_/]+)"', command):
-			command = re.sub(r'LootTable:"minecraft:([A-Za-z_/]+)"', r'LootTable:"minecraft:loot_tables/\1"', command)
+			command = re.sub(r'LootTable:"minecraft:([A-Za-z_/]+)"', r'LootTable:"minecraft:\1"', command)
 		else:
-			command = re.sub(r'LootTable:"([A-Za-z_]+):([A-Za-z_/]+)"', r'LootTable:"{}:loot_tables/\1/\2"'.format(datapack), command)
+			command = re.sub(r'LootTable:"([A-Za-z_]+):([A-Za-z_/]+)"', r'LootTable:"{}:\1/\2"'.format(datapack), command)
 
 
 
@@ -438,13 +464,13 @@ def convert_command(gets, filename):
 			command = re.sub(r'pl@ceh0ld3r', change_block(tmp[0][3], tmp[0][4], ""), command)
 
 		#Entity NBT
-		tmp = re.findall(r'summon (minecraft\:)?([A-Za-z_]+) ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) ({.*})', command)
-		command = re.sub(r'summon (minecraft\:)?([A-Za-z_]+) ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) ({.*})', r'summon \1\2 \3 pl@ceh0ld3r', command)
+		tmp = re.findall(r'^summon (minecraft\:)?([A-Za-z_]+) ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) ({.*})', command)
+		command = re.sub(r'^summon (minecraft\:)?([A-Za-z_]+) ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) ({.*})', r'summon \1\2 \3 pl@ceh0ld3r', command)
 		if tmp:
 			command = re.sub(r'pl@ceh0ld3r', new_nbt(tmp[0][3]), command)
 
-		tmp = re.findall(r'entitydata (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) ({.*})', command)
-		command = re.sub(r'entitydata (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) ({.*})', r'entitydata \1 pl@ceh0ld3r', command)
+		tmp = re.findall(r'^entitydata (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) ({.*})', command)
+		command = re.sub(r'^entitydata (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) ({.*})', r'entitydata \1 pl@ceh0ld3r', command)
 		if tmp:
 			command = re.sub(r'pl@ceh0ld3r', new_nbt(tmp[0][1]), command)
 
@@ -459,9 +485,9 @@ def convert_command(gets, filename):
 
 
 
-	except:
-		print("[Error] Unknown error in {}".format(filename))
-		return gets
+	#except:
+	#	print("[Error] Unknown error in {}".format(filename))
+	#	return gets
 
 
 	return command
@@ -815,15 +841,15 @@ def convert_advancement(adv):
 
 	try:
 		if re.findall(r'minecraft:([A-Za-z_/]+)', adv['parent']):
-			adv['parent'] = re.sub(r'minecraft:([A-Za-z_/]+)', r'minecraft:advancements/\1', adv['parent'])
+			adv['parent'] = re.sub(r'minecraft:([A-Za-z_/]+)', r'minecraft:\1', adv['parent'])
 		else:
-			adv['parent'] = re.sub(r'([A-Za-z_]+):([A-Za-z_/]+)', r'{}:advancements/\1/\2'.format(datapack), adv['parent'])
+			adv['parent'] = re.sub(r'([A-Za-z_]+):([A-Za-z_/]+)', r'{}:\1/\2'.format(datapack), adv['parent'])
 	except:
 		pass
 
 
 	try:
-		adv['rewards']['function'] = re.sub(r'([A-Za-z_]+):([A-Za-z_/]+)', r'{}:functions/\1/\2'.format(datapack), adv['rewards']['function'])
+		adv['rewards']['function'] = re.sub(r'([A-Za-z_]+):([A-Za-z_/]+)', r'{}:\1/\2'.format(datapack), adv['rewards']['function'])
 	except:
 		pass
 
@@ -833,9 +859,9 @@ def convert_advancement(adv):
 		for loot in adv['rewards']['loot']:
 
 			if re.findall(r'minecraft:([A-Za-z_/]+)', loot):
-				newloot += [re.sub(r'minecraft:([A-Za-z_/]+)', r'minecraft:loot_tables/\1', loot)]
+				newloot += [re.sub(r'minecraft:([A-Za-z_/]+)', r'minecraft:\1', loot)]
 			else:
-				newloot += [re.sub(r'([A-Za-z_]+):([A-Za-z_/]+)', r'{}:loot_tables/\1/\2'.format(datapack), loot)]
+				newloot += [re.sub(r'([A-Za-z_]+):([A-Za-z_/]+)', r'{}:\1/\2'.format(datapack), loot)]
 
 		adv['rewards']['loot'] = newloot
 	except:
@@ -861,7 +887,13 @@ def convert_advancement(adv):
 
 
 worldpath = input("Path to world folder: ")
-datapack = input("Datapack name (a-z and underscore): ").rstrip()
+datapack_name = input("Datapack name: ")
+
+while re.findall(r'[\\/]', datapack_name):
+	datapack_name = input("Datapack name: ")
+
+
+datapack = input("Datapack namespace (a-z and underscore): ").rstrip()
 
 while not re.findall(r'^[a-z_]+$', datapack):
 	datapack = input("Datapack name (a-z and underscore): ")
@@ -870,35 +902,35 @@ while not re.findall(r'^[a-z_]+$', datapack):
 print("Moving directories")
 
 try:
-	shutil.move(os.path.join(worldpath, "data", "functions"), os.path.join(worldpath, "data", datapack, "functions"))
+	shutil.move(os.path.join(worldpath, "data", "functions"), os.path.join(worldpath, "datapacks", datapack_name, "data", datapack, "functions"))
 except:
 	pass
 
 try:
-	shutil.move(os.path.join(worldpath, "data", "advancements"), os.path.join(worldpath, "data", datapack, "advancements"))
+	shutil.move(os.path.join(worldpath, "data", "advancements"), os.path.join(worldpath, "datapacks", datapack_name, "data", datapack, "advancements"))
 except:
 	pass
 
 try:
-	shutil.move(os.path.join(worldpath, "data", "loot_tables"), os.path.join(worldpath, "data", datapack, "loot_tables"))
+	shutil.move(os.path.join(worldpath, "data", "loot_tables"), os.path.join(worldpath, "datapacks", datapack_name, "data", datapack, "loot_tables"))
 except:
 	pass
 
 try:
-	shutil.move(os.path.join(worldpath, "structures"), os.path.join(worldpath, "data", datapack, "structures"))
+	shutil.move(os.path.join(worldpath, "structures"), os.path.join(worldpath, "datapacks", datapack_name, "data", datapack, "structures"))
 except:
 	pass
 
 
 #Make pack.mcmeta file
-with open(os.path.join(worldpath, "data", datapack, "pack.mcmeta"), 'w+') as f:
-	f.write( json.dumps( {"pack": {"pack_format": 3, "description": datapack}} , indent=4) )
+with open(os.path.join(worldpath, "datapacks", datapack_name, "pack.mcmeta"), 'w+') as f:
+	f.write( json.dumps( {"pack": {"pack_format": 1, "description": datapack}} , indent=4) )
 
 
 #Convert functions
 print("Converting functions")
 
-for path, dirs, files in os.walk( os.path.join(worldpath, "data", datapack, "functions") ):
+for path, dirs, files in os.walk( os.path.join(worldpath, "datapacks", datapack_name, "data", datapack, "functions") ):
 	for file in files:
 		if file.endswith(".mcfunction"):
 			fullpath = os.path.join(path, file)
