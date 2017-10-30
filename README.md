@@ -24,7 +24,7 @@ execute offset ~ ~1 ~ if block ~ ~ ~ minecraft:granite then setblock ~ ~1 ~ mine
 
 ## How to use:
 
-If you want to use this by only running one command at a time and converting it, you can go to https://tech.io/snippet/MmJ6djt
+If you want to use this by only running one command at a time and converting it, you can try running commands.py
 
 Install the repository by clicking "Clone or download" and then "Download ZIP". Unzip the file and you're ready to run the program. With python 3 installed, open run.py and type the path to the world folder into it (E.g. /home/[username]/.minecraft/saves/[world] or C:\Users\\[username]\AppData\Roaming\\.minecraft\saves\\[world] ). You also need to specify a name and a namespace for the datapack that your files are going to be moved into. The namespace can only contain lower case letters (a-z) and underscore. Hopefully there are no errors when you run it. If there aren't, you can go ahead and open up the world in 1.13. If there were errors or commands that haven't been converted correctly, you can report it in "Issues" and I'll do my best to fix it.
 
