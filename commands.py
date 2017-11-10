@@ -348,6 +348,9 @@ def convert_command(gets, filename):
 		command = re.sub(r'^xp ([\-0-9]+)L', r'xp add @s \1 levels',command)
 		command = re.sub(r'^xp ([\-0-9]+) (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+)', r'xp add \2 \1 points',command)
 		command = re.sub(r'^xp ([\-0-9]+)', r'xp add @s \1 points',command)
+
+		#Teams now
+		command = re.sub(r'^scoreboard teams', r'team', command)
 		
 
 
@@ -369,13 +372,13 @@ def convert_command(gets, filename):
 
 		if command.startswith("replaceitem"):
 			#Fill replace
-			tmp = re.findall(r'^replaceitem entity (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) ([a-z0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9]+)?(?: )?([0-9]+)?(?: )?({.*})?', command)
-			command = re.sub(r'^replaceitem entity (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) ([a-z0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9]+)?(?: )?([0-9]+)?(?: )?({.*})?', r'replaceitem entity \1 \2 minecraft:pl@ceh0ld3r \4', command)
+			tmp = re.findall(r'^replaceitem entity (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) slot\.([a-z0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9]+)?(?: )?([0-9]+)?(?: )?({.*})?', command)
+			command = re.sub(r'^replaceitem entity (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) slot\.([a-z0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9]+)?(?: )?([0-9]+)?(?: )?({.*})?', r'replaceitem entity \1 \2 minecraft:pl@ceh0ld3r \4', command)
 			if tmp:
 				command = re.sub(r'pl@ceh0ld3r', change_item(tmp[0][2], tmp[0][4], tmp[0][5]), command)
 			else:
-				tmp = re.findall(r'^replaceitem block ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) ([a-z0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9]+)?(?: )?([0-9]+)?(?: )?({.*})?', command)
-				command = re.sub(r'^replaceitem block ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) ([a-z0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9]+)?(?: )?([0-9]+)?(?: )?({.*})?', r'replaceitem block \1 \2 minecraft:pl@ceh0ld3r \4', command)
+				tmp = re.findall(r'^replaceitem block ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) slot\.([a-z0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9]+)?(?: )?([0-9]+)?(?: )?({.*})?', command)
+				command = re.sub(r'^replaceitem block ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) slot\.([a-z0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9]+)?(?: )?([0-9]+)?(?: )?({.*})?', r'replaceitem block \1 \2 minecraft:pl@ceh0ld3r \4', command)
 				if tmp:
 					command = re.sub(r'pl@ceh0ld3r', change_item(tmp[0][2], tmp[0][4], tmp[0][5]), command)
 
@@ -467,11 +470,23 @@ def convert_command(gets, filename):
 		if tmp:
 			command = re.sub(r'pl@ceh0ld3r', new_nbt(tmp[0][3]), command)
 
-		tmp = re.findall(r'^entitydata (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) ({.*})', command)
-		command = re.sub(r'^entitydata (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) ({.*})', r'entitydata \1 pl@ceh0ld3r', command)
+
+		#Entitydata
+		tmp = re.findall(r'^entitydata (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) ({.+})', command)
+		command = re.sub(r'^entitydata (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) ({.+})', r'data merge entity \1 pl@ceh0ld3r', command)
 		if tmp:
 			command = re.sub(r'pl@ceh0ld3r', new_nbt(tmp[0][1]), command)
 
+		command = re.sub(r'entitydata (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) {}',r'data get entity \1', command)
+
+
+		#Blockdata
+		tmp = re.findall(r'^blockdata ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) ({.+})', command)
+		command = re.sub(r'^blockdata ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) ({.+})', r'data merge block \1 pl@ceh0ld3r', command)
+		if tmp:
+			command = re.sub(r'pl@ceh0ld3r', new_nbt(tmp[0][1]), command)
+
+		command = re.sub(r'blockdata (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) {}',r'data get block \1', command)
 
 
 		#Testforblocks
@@ -479,6 +494,11 @@ def convert_command(gets, filename):
 
 		#Testfor
 		command = re.sub(r'^testfor (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+)( {.*})?', r'if entity \1\2', command)
+
+		#Scoreboard test
+		tmp = re.findall(r'^scoreboard players test (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) (\S+) ([0-9\*]+)(?: )?([0-9\*]+)?', command)
+		if tmp:
+			command = "if score {0} {1} {2} {3}".format(tmp[0][0], tmp[0][1], tmp[0][2], tmp[0][3] if tmp[0][3] else "*")
 
 
 
@@ -617,7 +637,7 @@ def convert(command, filename):
 		if executelist[-1].startswith("if "):
 			command = "execute "+" ".join(executelist)
 		elif len(executelist) > 1:
-			command = "execute "+" ".join(executelist[:-1])+" then "+executelist[-1]
+			command = "execute "+" ".join(executelist[:-1])+" run "+executelist[-1]
 		else:
 			command = executelist[-1]
 
@@ -673,7 +693,6 @@ def convert(command, filename):
 			selector_scoremin = ""
 			selector_score = ""
 
-			limit_used = False #For sort=arbitrary
 
 			#Others
 			n = len(selector)
@@ -698,8 +717,9 @@ def convert(command, filename):
 					if int(arg[1]) < 0:
 						arg[1] = abs(int(arg[1]))
 						selector += ["sort=furthest"]
+					else:
+						selector += ["sort=nearest"]
 
-					limit_used = True
 					selector[i] = "{}={}".format("limit", arg[1])
 
 
@@ -784,13 +804,9 @@ def convert(command, filename):
 				else:
 					selector += ["y_rotation={}..{}".format(selector_rym, selector_ry)]
 
-			if not limit_used and match[0] in ["a","e"]:
-				selector += ["sort=arbitrary"]
 
 			selector = [i for i in selector if i != "UNUSED"]
 			command = re.sub(r'pl@ceh0ld3r', ",".join(selector), command, count=1)
-
-		command = re.sub(r'@(a|e)($|\s)', r'@\1[sort=arbitrary]\2', command)
 
 		#Scoreboard NBT selector
 		if "scoreboard" in command:
@@ -798,12 +814,14 @@ def convert(command, filename):
 
 			#scoreboard players tag
 			tmp = re.findall(r'scoreboard players tag @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) (add|remove) ([\S]+) ({.*})', command)
-			command = re.sub(r'scoreboard players tag @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) (add|remove) ([\S]+) ({.*})', r'scoreboard players tag @\1pl@ceh0ld3r \3 \4', command)
+			command = re.sub(r'scoreboard players tag @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) (add|remove) ([\S]+) ({.*})', r'tag @\1pl@ceh0ld3r \3 \4', command)
 			if tmp:
 				if len(tmp[0][1]) > 0:
 					command = re.sub(r'pl@ceh0ld3r', "[{0},nbt={1}]".format(tmp[0][1][1:-1], new_nbt(tmp[0][4])), command)
 				else:
 					command = re.sub(r'pl@ceh0ld3r', "[nbt={0}]".format(new_nbt(tmp[0][4])), command)
+			else:
+				command = re.sub(r'scoreboard players tag', r'tag', command)
 
 			#scoreboard players set/add/remove
 			tmp = re.findall(r'scoreboard players (set|add|remove) @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) ([\S]+) ([0-9]+) ({.*})', command)
@@ -828,6 +846,7 @@ def convert(command, filename):
 	return command+"\n"
 
 
+#This part is for debugging
 datapack = input("Datapack name: ")
 tp_new_pos = False
 while True:
