@@ -315,11 +315,20 @@ def get_executes(command):
 		executelist += [re.findall(r'^detect [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ (?:minecraft\:)?[a-zA-Z_]+ [\S]+', command)[0]]
 		if tmp:
 			get_executes(tmp[0][3])
+
 	elif re.findall(r'^tp(.*)~', command):
 		tmp = re.findall(r'tp (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+)', command)[0]
-		if tmp[0]+tmp[1] != "s":
+		if tmp[0] != "@s":
 			executelist += ["execute {0} ~ ~ ~".format(tmp[0])]
 		executelist += ["tp @s {0}".format(tmp[1])]
+
+	elif command.startswith("entitydata"):
+		tmp = re.findall(r'entitydata (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+)(.*)', command)[0]
+		if not tmp[0].startswith("@s") and not tmp[0].startswith("@p") and not 'c=1' in tmp[0]:
+			executelist += ["execute {0} ~ ~ ~".format(tmp[0])]
+			executelist += ["entitydata @s{0}".format(tmp[1])]
+		else:
+			executelist += ["entitydata {0}{1}".format(tmp[0], tmp[1])]
 	else:
 		executelist += [command]
 
@@ -467,6 +476,12 @@ def convert_command(gets, filename):
 			command = re.sub(r'pl@ceh0ld3r', change_block(tmp[0][3], tmp[0][4], ""), command)
 
 		#Entity NBT
+		tmp = re.findall(r'^summon (minecraft\:)?([A-Za-z_]+)', command)
+		command = re.sub(r'^summon (minecraft\:)?([A-Za-z_]+)', r'summon \1pl@ceh0ld3r', command)
+		if tmp:
+			command = re.sub(r'pl@ceh0ld3r', tmp[0][1].lower(), command)
+
+
 		tmp = re.findall(r'^summon (minecraft\:)?([A-Za-z_]+) ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) ({.*})', command)
 		command = re.sub(r'^summon (minecraft\:)?([A-Za-z_]+) ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) ({.*})', r'summon \1\2 \3 pl@ceh0ld3r', command)
 		if tmp:
@@ -498,9 +513,34 @@ def convert_command(gets, filename):
 		command = re.sub(r'^testfor (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+)( {.*})?', r'if entity \1\2', command)
 
 		#Scoreboard test
-		tmp = re.findall(r'^scoreboard players test (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) (\S+) ([0-9\*]+)(?: )?([0-9\*]+)?', command)
+		tmp = re.findall(r'^scoreboard players test (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) (\S+) ([0-9\*\-]+)(?: )?([0-9\*\-]+)?', command)
 		if tmp:
 			command = "if score {0} {1} {2} {3}".format(tmp[0][0], tmp[0][1], tmp[0][2], tmp[0][3] if tmp[0][3] else "*")
+
+		#Advancement test
+		tmp = re.findall(r'^advancement test (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) ([a-z0-9_/:]+)(?: )?([a-z0-9_/:]+)?', command)
+		if tmp:
+			selector = tmp[0][0]
+			command = "if entity "
+			tmp1 = ""
+			if len(tmp[0][2]) == 0:
+				tmp1 = "advancements={" + tmp[0][1] + "=true}"
+			else:
+				tmp1 = "advancements={" + tmp[0][1] + "={" + tmp[0][2] +"=true}}"
+
+
+
+
+			if len(selector) > 2:
+
+				command += selector[:-1] + "," + tmp1 + "]"
+
+			else:
+
+				command += selector + "[" + tmp1 + "]"
+
+
+
 
 
 
@@ -673,12 +713,12 @@ def convert(command, filename):
 						selector[i] = "{}={}".format(arg[0],int(arg[1]) + 1)
 
 			else:'''
-			if True:
-				#Int coordinates to floats if needed
-				for i in range(len(selector)):
-					arg = selector[i].split("=")
-					if arg[0] in ["x","y","z"]:
-						selector[i] = "{}={}".format(arg[0],float(arg[1]) + 0.5)
+
+			#Int coordinates to floats if needed
+			for i in range(len(selector)):
+				arg = selector[i].split("=")
+				if arg[0] in ["x","y","z"]:
+					selector[i] = "{}={}".format(arg[0],float(arg[1]) + 0.5)
 
 			selector_lm = ""
 			selector_l = ""
@@ -692,8 +732,7 @@ def convert(command, filename):
 			selector_rym = ""
 			selector_ry = ""
 
-			selector_scoremin = ""
-			selector_score = ""
+			selector_scores = {}
 
 
 			#Others
@@ -714,8 +753,11 @@ def convert(command, filename):
 
 					selector[i] = "{}={}".format("gamemode", arg[1])
 
-				#Limit
-				if arg[0] == "c":
+				elif arg[0] == "type":
+					selector[i] = selector[i].lower()
+
+					#Limit
+				elif arg[0] == "c":
 					if int(arg[1]) < 0:
 						arg[1] = abs(int(arg[1]))
 						selector += ["sort=furthest"]
@@ -725,60 +767,67 @@ def convert(command, filename):
 					selector[i] = "{}={}".format("limit", arg[1])
 
 
-				#Level
-				if arg[0] == "lm":
+					#Level
+				elif arg[0] == "lm":
 					selector_lm = int(arg[1])
 					selector[i] = "UNUSED" #Uses UNUSED to prevent changing the list size while iterating
-				if arg[0] == "l":
+				elif arg[0] == "l":
 					selector_l = int(arg[1])
 					selector[i] = "UNUSED"
 
-				#Distance
-				if arg[0] == "rm":
+					#Distance
+				elif arg[0] == "rm":
 					selector_rm = int(arg[1])
 					selector[i] = "UNUSED"
-				if arg[0] == "r":
+				elif arg[0] == "r":
 					selector_r = int(arg[1])
 					selector[i] = "UNUSED"
 
-				#X rotation
-				if arg[0] == "rxm":
+					#X rotation
+				elif arg[0] == "rxm":
 					selector_rxm = int(arg[1])
 					selector[i] = "UNUSED"
-				if arg[0] == "rx":
+				elif arg[0] == "rx":
 					selector_rx = int(arg[1])
 					selector[i] = "UNUSED"
 
-				#Y rotation
-				if arg[0] == "rym":
+					#Y rotation
+				elif arg[0] == "rym":
 					selector_rym = int(arg[1])
 					selector[i] = "UNUSED"
-				if arg[0] == "ry":
+				elif arg[0] == "ry":
 					selector_ry = int(arg[1])
 					selector[i] = "UNUSED"
 
 				#Scores
-				tmp = re.findall(r'score_([A-Za-z0-9]+)(_min)?', arg[0])
+				tmp = re.findall(r'^score_([A-Za-z0-9]+)(_min)?', arg[0])
 				if tmp:
 
-					a = ""
-					for j in range(i+1, n):
-						arg2 = selector[j].split("=")
 
-						if arg2[0] == "score_{}{}".format(tmp[0][0], "_min"*(len(tmp[0][1]) == 0) ):
-							a = int(arg2[1])
-							selector[j] = "UNUSED"
-							break
+					if len(tmp[0][1]) == 0:
 
-					if str(a) == str(arg[1]):
-						selector += ["score_{}={}".format(tmp[0][0], a)]
-					elif len(tmp[0][1]) == 0: #If no _min
-						selector += ["score_{}={}..{}".format(tmp[0][0], a, arg[1])]
+						if tmp[0][0] in selector_scores and re.findall(r'^([0-9\-]+)..$', selector_scores[tmp[0][0]]):
+							
+							if arg[1] + ".." == selector_scores[tmp[0][0]]:
+								selector_scores[tmp[0][0]] = arg[1]
+							else:
+								selector_scores[tmp[0][0]] = selector_scores[tmp[0][0]] + arg[1]
+
+						else:
+							selector_scores[tmp[0][0]] = ".." + arg[1]
+					
 					else:
-						selector += ["score_{}={}..{}".format(tmp[0][0], arg[1], a)]
+						if tmp[0][0] in selector_scores and re.findall(r'^..([0-9\-]+)$', selector_scores[tmp[0][0]]):
+							
+							if ".." + arg[1] == selector_scores[tmp[0][0]]:
+								selector_scores[tmp[0][0]] = arg[1]
+							else:
+								selector_scores[tmp[0][0]] = arg[1] + selector_scores[tmp[0][0]]
 
-					selector[i] = "UNUSED"
+						else:
+							selector_scores[tmp[0][0]] = arg[1] + ".."
 
+					selector[i] = "UNUSED"	
 
 
 			#Range selectors
@@ -805,6 +854,11 @@ def convert(command, filename):
 					selector += ["y_rotation={}".format(selector_rym)]
 				else:
 					selector += ["y_rotation={}..{}".format(selector_rym, selector_ry)]
+
+			if not selector_scores == {}:
+
+				selector += ["scores={" + ",".join([i+"="+selector_scores[i] for i in selector_scores]) + "}"]
+
 
 
 			selector = [i for i in selector if i != "UNUSED"]
@@ -942,7 +996,7 @@ except:
 
 #Make pack.mcmeta file
 with open(os.path.join(worldpath, "datapacks", datapack_name, "pack.mcmeta"), 'w+') as f:
-	f.write( json.dumps( {"pack": {"pack_format": 1, "description": datapack}} , indent=4) )
+	f.write( json.dumps( {"pack": {"pack_format": 1, "description": "Converted from 1.12"}} , indent=4) )
 
 
 #Convert functions
