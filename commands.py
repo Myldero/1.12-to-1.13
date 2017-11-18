@@ -65,13 +65,124 @@ def change_block(block, data="", nbt=""):
 						block = states[data % len(states)] #This picks the correct block state
 					break
 
+		if block.startswith("skull"):
+			skulls = ['skeleton_skull', 'wither_skeleton_skull', 'zombie_head', 'player_head', 'creeper_head', 'dragon_head']
+
+			rotation = 0
+			skull_type = 0
+
+			#Set rotation
+			tmp = re.findall(r'Rot:([0-9]+)', nbt)
+			if tmp:
+				rotation = int(tmp[0][0])
+
+				nbt = re.sub(r'(,)?Rot:([0-9]+)(b)?(,)?', r',', nbt)
+				nbt = re.sub(r'^{,', r'{', nbt)
+				nbt = re.sub(r',}$', r'}', nbt)
+
+
+			if block.startswith("skull["):
+				block = block[:-1] + ",rotation="+str(rotation)+"]"
+			else:
+				block = block + "[rotation="+str(rotation)+"]"
+
+
+			#Set Skull Type
+			tmp = re.findall(r'SkullType:([0-9])', nbt)
+			if tmp:
+				skull_type = int(tmp[0][0])
+
+				nbt = re.sub(r'(,)?SkullType:([0-9])(b)?(,)?', r',', nbt)
+				nbt = re.sub(r'^{,', r'{', nbt)
+				nbt = re.sub(r',}$', r'}', nbt)
+
+
+			block = re.sub(r'^skull', skulls[skull_type], block)
+
+
+		elif block.startswith("wall_skull"):
+			wall_skulls = ['skeleton_wall_skull', 'wither_skeleton_wall_skull', 'zombie_wall_head', 'player_wall_head', 'creeper_wall_head', 'dragon_wall_head']
+
+			skull_type = 0
+
+			tmp = re.findall(r'SkullType:([0-9])', nbt)
+			if tmp:
+				skull_type = int(tmp[0][0])
+
+				nbt = re.sub(r'(,)?SkullType:([0-9])(b)?(,)?', r',', nbt)
+				nbt = re.sub(r'^{,', r'{', nbt)
+				nbt = re.sub(r',}$', r'}', nbt)
+
+
+			block = re.sub(r'^wall_skull', wall_skulls[skull_type], block)
+			nbt = ""
+
+		elif block.startswith("wall_banner") or block.startswith("banner"):
+			colors = ['black', 'red', 'green', 'brown', 'blue', 'purple', 'cyan', 'light_gray', 'gray', 'pink', 'lime', 'yellow', 'light_blue', 'magenta', 'orange', 'white']
+			color = 0
+
+
+			tmp = re.findall(r'Base:([0-9]+)', nbt)
+			if tmp:
+				color = int(tmp[0][0])
+
+				nbt = re.sub(r'(,)?Base:([0-9])(b)?(,)?', r',', nbt)
+				nbt = re.sub(r'^{,', r'{', nbt)
+				nbt = re.sub(r',}$', r'}', nbt)
+
+
+			block = colors[color] + "_" + block
+
+		elif block.startswith("bed"):
+			colors = ['white', 'orange', 'magenta', 'light_blue', 'yellow', 'lime', 'pink', 'gray', 'light_gray', 'cyan', 'purple', 'blue', 'brown', 'green', 'red', 'black']
+			color = 0
+			tmp = re.findall(r'color:([0-9]+)', nbt, flags=re.IGNORECASE)
+			if tmp:
+				color = int(tmp[0][0])
+
+			block = colors[color] + "_" + block
+			nbt = ""
+
+		elif block.startswith("note_block"):
+			note = 0
+			tmp = re.findall(r'note:([0-9]+)', nbt, flags=re.IGNORECASE)
+			if tmp:
+				note = int(tmp[0][0])
+
+			block = block + "[note="+str(note)+"]"
+			nbt = ""
+
+		elif block.startswith("flower_pot"):
+
+			flowers = {'red_flower 0': 'poppy', 'yellow_flower 0': 'dandelion', 'sapling 0': 'oak_sapling', 'sapling 1': 'spruce_sapling', 'sapling 2': 'birch_sapling', 'sapling 3': 'jungle_sapling', 'red_mushroom 0': 'red_mushroom', 'brown_mushroom 0': 'brown_mushroom', 'cactus 0': 'cactus', 'deadbush 0': 'dead_bush', 'tallgrass 2': 'fern', 'sapling 4': 'acacia_sapling', 'sapling 5': 'dark_oak_sapling', 'red_flower 1': 'blue_orchid', 'red_flower 2': 'allium', 'red_flower 3': 'azure_bluet', 'red_flower 4': 'red_tulip', 'red_flower 5': 'orange_tulip', 'red_flower 6': 'white_tulip', 'red_flower 7': 'pink_tulip', 'red_flower 8': 'oxeye_daisy'}
+			flower_id = "air"
+			flower_data = 0
+			#{Item:"minecraft:red_flower",Data:0}
+			tmp = re.findall(r'Item:(?:\")?(?:minecraft:)?([a-z_]+)', nbt, flags=re.IGNORECASE)
+			if tmp:
+				flower_id = tmp[0]
+
+			tmp = re.findall(r'Data:([0-9]+)', nbt, flags=re.IGNORECASE)
+			if tmp:
+				flower_data = int(tmp[0][0])
+
+				tmp = flower_id+" "+str(flower_data)
+				if tmp in flowers:
+					block = "potted_" + flowers[tmp]
+
+			nbt = ""
+
+
+
+
+
 
 
 
 
 
 	#NBT data
-	if len(nbt) > 0:
+	if len(nbt) > 2:
 		block += nbt
 
 	return block
@@ -88,7 +199,7 @@ def change_item(item, data, nbt):
 		nbt = new_nbt(nbt)
 
 
-	if data != -1 and any(item.endswith(i) for i in ("sword","shovel","pickaxe","hoe","axe","flint_and_steel","helmet","chestplate","leggings","boots","bow","fishing_rod","shears")):
+	if data != -1 and any(item.endswith(i) for i in ("filled_map","sword","shovel","pickaxe","hoe","axe","flint_and_steel","helmet","chestplate","leggings","boots","bow","fishing_rod","shears")):
 		item += "{Damage:"+str(data)
 
 		if len(nbt) > 0:
@@ -97,6 +208,14 @@ def change_item(item, data, nbt):
 			item += "}"
 
 		return item
+	if item == "spawn_egg":
+
+		tmp = re.findall(r'entitytag:{id:(?:\")?(?:minecraft:)?([a-z_]+)', nbt.lower())
+		if tmp:
+			return tmp[0] + "_" + item
+
+
+
 	elif data > 0:
 		with open(os.path.join(".", "itemvalues.txt"), 'r') as f:
 			for line in f:
@@ -104,6 +223,8 @@ def change_item(item, data, nbt):
 					values = line.rstrip().split(":")[1].split(" ") #Gets list of block states
 
 					return values[data % len(values)] + nbt #Returns the correct item and nbt concatenated
+
+
 
 	return item + nbt #Returns the item and nbt concatenated
 
@@ -254,12 +375,21 @@ def get_nbt_list(nbt, nbt_type):
 			for i in range(len(nbt_list)):
 
 				block = re.findall(r'(?:minecraft:)?([a-z_]+)',nbt_list[i])[0]
-
 				with open(os.path.join(".", "blockstates.txt"), 'r') as f:
 					for line in f:
 						if re.findall(r'^{}:'.format(block), line): #Find block in blockstates.txt
-
 							states = ["minecraft:"+i for i in set(re.findall(r'(?:\:| )([a-z_]+)', line))]
+							print(states)
+							if states[0] == "minecraft:skull":
+								states = ['minecraft:skeleton_skull', 'minecraft:wither_skeleton_skull', 'minecraft:zombie_head', 'minecraft:player_head', 'minecraft:creeper_head', 'minecraft:dragon_head', 'minecraft:skeleton_wall_skull', 'minecraft:wither_skeleton_wall_skull', 'minecraft:zombie_wall_head', 'minecraft:player_wall_head', 'minecraft:creeper_wall_head', 'minecraft:dragon_wall_head']
+							elif states[0] == "minecraft:banner":
+								states = ['minecraft:black_banner', 'minecraft:red_banner', 'minecraft:green_banner', 'minecraft:brown_banner', 'minecraft:blue_banner', 'minecraft:purple_banner', 'minecraft:cyan_banner', 'minecraft:light_gray_banner', 'minecraft:gray_banner', 'minecraft:pink_banner', 'minecraft:lime_banner', 'minecraft:yellow_banner', 'minecraft:light_blue_banner', 'minecraft:magenta_banner', 'minecraft:orange_banner', 'minecraft:white_banner']
+							elif states[0] == "minecraft:wall_banner":
+								states = ['minecraft:black_wall_banner', 'minecraft:red_wall_banner', 'minecraft:green_wall_banner', 'minecraft:brown_wall_banner', 'minecraft:blue_wall_banner', 'minecraft:purple_wall_banner', 'minecraft:cyan_wall_banner', 'minecraft:light_gray_wall_banner', 'minecraft:gray_wall_banner', 'minecraft:pink_wall_banner', 'minecraft:lime_wall_banner', 'minecraft:yellow_wall_banner', 'minecraft:light_blue_wall_banner', 'minecraft:magenta_wall_banner', 'minecraft:orange_wall_banner', 'minecraft:white_wall_banner']
+							elif states[0] == "minecraft:bed":
+								states = ['minecraft:white_bed', 'minecraft:orange_bed', 'minecraft:magenta_bed', 'minecraft:light_blue_bed', 'minecraft:yellow_bed', 'minecraft:lime_bed', 'minecraft:pink_bed', 'minecraft:gray_bed', 'minecraft:light_gray_bed', 'minecraft:cyan_bed', 'minecraft:purple_bed', 'minecraft:blue_bed', 'minecraft:brown_bed', 'minecraft:green_bed', 'minecraft:red_bed', 'minecraft:black_bed']
+							elif states[0] == "minecraft:flower_pot":
+								states = ['minecraft:flower_pot', 'minecraft:potted_poppy', 'minecraft:potted_dandelion', 'minecraft:potted_oak_sapling', 'minecraft:potted_spruce_sapling', 'minecraft:potted_birch_sapling', 'minecraft:potted_jungle_sapling', 'minecraft:potted_red_mushroom', 'minecraft:potted_brown_mushroom', 'minecraft:potted_cactus', 'minecraft:potted_dead_bush', 'minecraft:potted_fern', 'minecraft:potted_acacia_sapling', 'minecraft:potted_dark_oak_sapling', 'minecraft:potted_blue_orchid', 'minecraft:potted_allium', 'minecraft:potted_azure_bluet', 'minecraft:potted_red_tulip', 'minecraft:potted_orange_tulip', 'minecraft:potted_white_tulip', 'minecraft:potted_pink_tulip', 'minecraft:potted_oxeye_daisy']
 
 							nbt_list[i] = "\"" + "\",\"".join(states) + "\""
 
@@ -295,6 +425,7 @@ def new_nbt(nbt):
 
 
 
+
 def get_executes(command):
 	global executelist
 
@@ -313,18 +444,26 @@ def get_executes(command):
 		executelist += [re.findall(r'^detect [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ (?:minecraft\:)?[a-zA-Z_]+ [\S]+', command)[0]]
 		if tmp:
 			get_executes(tmp[0][3])
+
 	elif re.findall(r'^tp(.*)~', command):
 		tmp = re.findall(r'tp (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+)', command)[0]
-		if tmp[0]+tmp[1] != "s":
+		if tmp[0] != "@s":
 			executelist += ["execute {0} ~ ~ ~".format(tmp[0])]
 		executelist += ["tp @s {0}".format(tmp[1])]
+
+	elif command.startswith("entitydata"):
+		tmp = re.findall(r'entitydata (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+)(.*)', command)[0]
+		if not tmp[0].startswith("@s") and not tmp[0].startswith("@p") and not 'c=1' in tmp[0]:
+			executelist += ["execute {0} ~ ~ ~".format(tmp[0])]
+			executelist += ["entitydata @s{0}".format(tmp[1])]
+		else:
+			executelist += ["entitydata {0}{1}".format(tmp[0], tmp[1])]
 	else:
 		executelist += [command]
 
 def convert_command(gets, filename):
 	command = gets
-	#try:
-	if True:
+	try:
 
 		#Toggledownfall to weather clear
 		command = re.sub(r'^toggledownfall', r'weather clear', command)
@@ -428,10 +567,10 @@ def convert_command(gets, filename):
 
 		#Block states instead of data values. It will just copy states over if they were already used
 		if command.startswith("setblock"):
-			tmp = re.findall(r'^setblock ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([\S]+)?(?: )?(destroy|keep|replace)?(?: )?(.+)?', command)
-			command = re.sub(r'^setblock ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([\S]+)?(?: )?(destroy|keep|replace)?(?: )?(.+)?', r'setblock \1 minecraft:pl@ceh0ld3r \4', command)
+			tmp = re.findall(r'^setblock ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([\S]+)?(?: )?(destroy|keep|replace)?(?: )?({.+})?', command)
+			command = re.sub(r'^setblock ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([\S]+)?(?: )?(destroy|keep|replace)?(?: )?({.+})?', r'setblock \1 minecraft:pl@ceh0ld3r \4', command)
 			if tmp:
-				command = re.sub(r'pl@ceh0ld3r', change_block(tmp[0][1], tmp[0][2], tmp[0][4]), command)
+				command = re.sub(r'pl@ceh0ld3r', change_block(tmp[0][1], tmp[0][2], new_nbt(tmp[0][4])), command)
 
 		if command.startswith("testforblock "):
 			tmp = re.findall(r'^testforblock ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([\S]+)?(?: )?({.*})?', command)
@@ -465,6 +604,12 @@ def convert_command(gets, filename):
 			command = re.sub(r'pl@ceh0ld3r', change_block(tmp[0][3], tmp[0][4], ""), command)
 
 		#Entity NBT
+		tmp = re.findall(r'^summon (minecraft\:)?([A-Za-z_]+)', command)
+		command = re.sub(r'^summon (minecraft\:)?([A-Za-z_]+)', r'summon \1pl@ceh0ld3r', command)
+		if tmp:
+			command = re.sub(r'pl@ceh0ld3r', tmp[0][1].lower(), command)
+
+
 		tmp = re.findall(r'^summon (minecraft\:)?([A-Za-z_]+) ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) ({.*})', command)
 		command = re.sub(r'^summon (minecraft\:)?([A-Za-z_]+) ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) ({.*})', r'summon \1\2 \3 pl@ceh0ld3r', command)
 		if tmp:
@@ -496,16 +641,43 @@ def convert_command(gets, filename):
 		command = re.sub(r'^testfor (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+)( {.*})?', r'if entity \1\2', command)
 
 		#Scoreboard test
-		tmp = re.findall(r'^scoreboard players test (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) (\S+) ([0-9\*]+)(?: )?([0-9\*]+)?', command)
+		tmp = re.findall(r'^scoreboard players test (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) (\S+) ([0-9\*\-]+)(?: )?([0-9\*\-]+)?', command)
 		if tmp:
 			command = "if score {0} {1} {2} {3}".format(tmp[0][0], tmp[0][1], tmp[0][2], tmp[0][3] if tmp[0][3] else "*")
 
+		#Advancement test
+		tmp = re.findall(r'^advancement test (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) ([a-z0-9_/:]+)(?: )?([a-z0-9_/:]+)?', command)
+		if tmp:
+			selector = tmp[0][0]
+			command = "if entity "
+			tmp1 = ""
+			if len(tmp[0][2]) == 0:
+				tmp1 = "advancements={" + tmp[0][1] + "=true}"
+			else:
+				tmp1 = "advancements={" + tmp[0][1] + "={" + tmp[0][2] +"=true}}"
 
 
 
-	#except:
-	#	print("[Error] Unknown error in {}".format(filename))
-	#	return gets
+
+			if len(selector) > 2:
+
+				command += selector[:-1] + "," + tmp1 + "]"
+
+			else:
+
+				command += selector + "[" + tmp1 + "]"
+
+
+
+
+
+
+
+	except Exception as inst:
+		print("[Error] Unknown error in {}".format(filename))
+		print(inst)
+
+		return gets
 
 
 	return command
@@ -671,12 +843,12 @@ def convert(command, filename):
 						selector[i] = "{}={}".format(arg[0],int(arg[1]) + 1)
 
 			else:'''
-			if True:
-				#Int coordinates to floats if needed
-				for i in range(len(selector)):
-					arg = selector[i].split("=")
-					if arg[0] in ["x","y","z"]:
-						selector[i] = "{}={}".format(arg[0],float(arg[1]) + 0.5)
+
+			#Int coordinates to floats if needed
+			for i in range(len(selector)):
+				arg = selector[i].split("=")
+				if arg[0] in ["x","y","z"]:
+					selector[i] = "{}={}".format(arg[0],float(arg[1]) + 0.5)
 
 			selector_lm = ""
 			selector_l = ""
@@ -690,8 +862,7 @@ def convert(command, filename):
 			selector_rym = ""
 			selector_ry = ""
 
-			selector_scoremin = ""
-			selector_score = ""
+			selector_scores = {}
 
 
 			#Others
@@ -712,8 +883,11 @@ def convert(command, filename):
 
 					selector[i] = "{}={}".format("gamemode", arg[1])
 
-				#Limit
-				if arg[0] == "c":
+				elif arg[0] == "type":
+					selector[i] = selector[i].lower()
+
+					#Limit
+				elif arg[0] == "c":
 					if int(arg[1]) < 0:
 						arg[1] = abs(int(arg[1]))
 						selector += ["sort=furthest"]
@@ -723,60 +897,67 @@ def convert(command, filename):
 					selector[i] = "{}={}".format("limit", arg[1])
 
 
-				#Level
-				if arg[0] == "lm":
+					#Level
+				elif arg[0] == "lm":
 					selector_lm = int(arg[1])
 					selector[i] = "UNUSED" #Uses UNUSED to prevent changing the list size while iterating
-				if arg[0] == "l":
+				elif arg[0] == "l":
 					selector_l = int(arg[1])
 					selector[i] = "UNUSED"
 
-				#Distance
-				if arg[0] == "rm":
+					#Distance
+				elif arg[0] == "rm":
 					selector_rm = int(arg[1])
 					selector[i] = "UNUSED"
-				if arg[0] == "r":
+				elif arg[0] == "r":
 					selector_r = int(arg[1])
 					selector[i] = "UNUSED"
 
-				#X rotation
-				if arg[0] == "rxm":
+					#X rotation
+				elif arg[0] == "rxm":
 					selector_rxm = int(arg[1])
 					selector[i] = "UNUSED"
-				if arg[0] == "rx":
+				elif arg[0] == "rx":
 					selector_rx = int(arg[1])
 					selector[i] = "UNUSED"
 
-				#Y rotation
-				if arg[0] == "rym":
+					#Y rotation
+				elif arg[0] == "rym":
 					selector_rym = int(arg[1])
 					selector[i] = "UNUSED"
-				if arg[0] == "ry":
+				elif arg[0] == "ry":
 					selector_ry = int(arg[1])
 					selector[i] = "UNUSED"
 
 				#Scores
-				tmp = re.findall(r'score_([A-Za-z0-9]+)(_min)?', arg[0])
+				tmp = re.findall(r'^score_([A-Za-z0-9]+)(_min)?', arg[0])
 				if tmp:
 
-					a = ""
-					for j in range(i+1, n):
-						arg2 = selector[j].split("=")
 
-						if arg2[0] == "score_{}{}".format(tmp[0][0], "_min"*(len(tmp[0][1]) == 0) ):
-							a = int(arg2[1])
-							selector[j] = "UNUSED"
-							break
+					if len(tmp[0][1]) == 0:
 
-					if str(a) == str(arg[1]):
-						selector += ["score_{}={}".format(tmp[0][0], a)]
-					elif len(tmp[0][1]) == 0: #If no _min
-						selector += ["score_{}={}..{}".format(tmp[0][0], a, arg[1])]
+						if tmp[0][0] in selector_scores and re.findall(r'^([0-9\-]+)..$', selector_scores[tmp[0][0]]):
+							
+							if arg[1] + ".." == selector_scores[tmp[0][0]]:
+								selector_scores[tmp[0][0]] = arg[1]
+							else:
+								selector_scores[tmp[0][0]] = selector_scores[tmp[0][0]] + arg[1]
+
+						else:
+							selector_scores[tmp[0][0]] = ".." + arg[1]
+					
 					else:
-						selector += ["score_{}={}..{}".format(tmp[0][0], arg[1], a)]
+						if tmp[0][0] in selector_scores and re.findall(r'^..([0-9\-]+)$', selector_scores[tmp[0][0]]):
+							
+							if ".." + arg[1] == selector_scores[tmp[0][0]]:
+								selector_scores[tmp[0][0]] = arg[1]
+							else:
+								selector_scores[tmp[0][0]] = arg[1] + selector_scores[tmp[0][0]]
 
-					selector[i] = "UNUSED"
+						else:
+							selector_scores[tmp[0][0]] = arg[1] + ".."
 
+					selector[i] = "UNUSED"	
 
 
 			#Range selectors
@@ -804,6 +985,11 @@ def convert(command, filename):
 				else:
 					selector += ["y_rotation={}..{}".format(selector_rym, selector_ry)]
 
+			if not selector_scores == {}:
+
+				selector += ["scores={" + ",".join([i+"="+selector_scores[i] for i in selector_scores]) + "}"]
+
+
 
 			selector = [i for i in selector if i != "UNUSED"]
 			command = re.sub(r'pl@ceh0ld3r', ",".join(selector), command, count=1)
@@ -813,8 +999,8 @@ def convert(command, filename):
 
 
 			#scoreboard players tag
-			tmp = re.findall(r'scoreboard players tag @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) (add|remove) ([\S]+) ({.*})', command)
-			command = re.sub(r'scoreboard players tag @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) (add|remove) ([\S]+) ({.*})', r'tag @\1pl@ceh0ld3r \3 \4', command)
+			tmp = re.findall(r'scoreboard players tag @([a-z])(\[.*\])? (add|remove) ([\S]+) ({.*})', command)
+			command = re.sub(r'scoreboard players tag @([a-z])(\[.*\])? (add|remove) ([\S]+) ({.*})', r'tag @\1pl@ceh0ld3r \3 \4', command)
 			if tmp:
 				if len(tmp[0][1]) > 0:
 					command = re.sub(r'pl@ceh0ld3r', "[{0},nbt={1}]".format(tmp[0][1][1:-1], new_nbt(tmp[0][4])), command)
@@ -824,8 +1010,8 @@ def convert(command, filename):
 				command = re.sub(r'scoreboard players tag', r'tag', command)
 
 			#scoreboard players set/add/remove
-			tmp = re.findall(r'scoreboard players (set|add|remove) @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) ([\S]+) ([0-9]+) ({.*})', command)
-			command = re.sub(r'scoreboard players (set|add|remove) @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) ([\S]+) ([0-9]+) ({.*})', r'scoreboard players \1 @\2pl@ceh0ld3r \4 \5', command)
+			tmp = re.findall(r'scoreboard players (set|add|remove) @([a-z])(\[.*\])? ([\S]+) ([0-9]+) ({.*})', command)
+			command = re.sub(r'scoreboard players (set|add|remove) @([a-z])(\[.*\])? ([\S]+) ([0-9]+) ({.*})', r'scoreboard players \1 @\2pl@ceh0ld3r \4 \5', command)
 			if tmp:
 				if len(tmp[0][2]) > 0:
 					command = re.sub(r'pl@ceh0ld3r', "[{0},nbt={1}]".format(tmp[0][2][1:-1], new_nbt(tmp[0][5])), command)
@@ -835,8 +1021,8 @@ def convert(command, filename):
 		#testfor NBT selector and execute command
 		if "if entity" in command:
 
-			tmp = re.findall(r'if entity @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) ({.*})', command)
-			command = re.sub(r'if entity @([a-z])([A-Za-z0-9=\.,_\-\!\[\]]*) ({.*})', r'if entity @\1pl@ceh0ld3r', command)
+			tmp = re.findall(r'if entity @([a-z])(\[.*\])? ({.*})', command)
+			command = re.sub(r'if entity @([a-z])(\[.*\])? ({.*})', r'if entity @\1pl@ceh0ld3r', command)
 			if tmp:
 				if len(tmp[0][1]) > 0:
 					command = re.sub(r'pl@ceh0ld3r', "[{0},nbt={1}]".format(tmp[0][1][1:-1], new_nbt(tmp[0][2])), command)
@@ -846,8 +1032,7 @@ def convert(command, filename):
 	return command+"\n"
 
 
-#This part is for debugging
-datapack = input("Datapack name: ")
+datapack = input("Datapack namespace: ")
 tp_new_pos = False
 while True:
 	print(convert(input().rstrip(), "console"), end="")
