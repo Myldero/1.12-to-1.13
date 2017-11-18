@@ -8,9 +8,9 @@ It will try to optimize your execute commands as much as possible but there migh
 
 It's only able to convert 1.12 commands, so running this twice or running it with old or broken commands won't work!
 
-It can't convert the stats command if you used that because the change was too big and it would require a lot of work for it to work every time. Maybe I'll make an option for successCount though since that's kind of predictable.
+It can't convert the stats command at the moment, simply because it's too big a change. You'll have to set up the execute store command yourself.
 
-There might be problems with blocks if you used something like `detect ~ ~ ~ wool * ...` since wool has been split off into different blocks instead of just states.
+There might be problems with blocks if you used something like `detect ~ ~ ~ wool * ...` since wool has been split off into different blocks instead of just states. As it seems, there won't be added an ability to target multiple blocks in one command, so you'll have to work around this one yourself too.
 
 #### Example command:
 
@@ -19,7 +19,7 @@ execute @s ~ ~1 ~ detect ~ ~ ~ stone 1 setblock ~ ~1 ~ chest 3 replace {LootTabl
 ```
 
 ```
-execute offset ~ ~1 ~ if block ~ ~ ~ minecraft:granite then setblock ~ ~1 ~ minecraft:chest[facing=south]{LootTable:"demo:loot_tables/loot/chest"} replace
+execute offset ~ ~1 ~ if block ~ ~ ~ minecraft:granite run setblock ~ ~1 ~ minecraft:chest[facing=south]{LootTable:"demo:loot/chest"} replace
 ```
 
 ## How to use:
@@ -30,4 +30,4 @@ Install the repository by clicking "Clone or download" and then "Download ZIP". 
 
 As you might know, this converter is based of the finished 1.13 so it won't work in the early snapshots.
 
-Always remember to create a backup of your world, since this converter isn't made to convert from 1.13 snapshots to 1.13, so if you want to use it, it's most likely best to wait a bit more for all the fancy features to come out.
+Always remember to create a backup of your world since the syntax for some commands might be changed during snapshots.
