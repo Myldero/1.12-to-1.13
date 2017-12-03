@@ -176,7 +176,7 @@ def change_block(block, data="", nbt=""):
 
 	#NBT data
 	if len(nbt) > 2:
-		block += nbt
+		block += new_nbt(nbt)
 
 	return block
 
@@ -188,7 +188,7 @@ def change_item(item, data, nbt):
 	elif len(data) == 0:
 		data = 0
 
-	if len(nbt) > 0:
+	if len(nbt) > 2:
 		nbt = new_nbt(nbt)
 
 
@@ -542,18 +542,18 @@ def convert_command(gets, filename):
 
 
 		#Function, advancement and loot table file locations
-		command = re.sub(r'^function ([A-Za-z_]+):([A-Za-z_/]+)', r'function {}:\1/\2'.format(datapack), command)
-		command = re.sub(r'structure_block(.+)name:(?:")?([A-Za-z_/]+)(?:")?', r'structure_block\1name:"{}:\2"'.format(datapack), command)
+		command = re.sub(r'^function ([A-Za-z0-9_\-]+):([A-Za-z0-9_\-/]+)', r'function {}:\1/\2'.format(datapack), command)
+		command = re.sub(r'structure_block(.+)name:(?:")?([A-Za-z0-9_\-/]+)(?:")?', r'structure_block\1name:"{}:\2"'.format(datapack), command)
 
-		if re.findall(r'^advancement (.*) minecraft:([A-Za-z_/]+)', command):
-			command = re.sub(r'^advancement (.*) minecraft:([A-Za-z_/]+)', r'advancement \1 minecraft:\2', command)
+		if re.findall(r'^advancement (.*) minecraft:([A-Za-z0-9_\-/]+)', command):
+			command = re.sub(r'^advancement (.*) minecraft:([A-Za-z0-9_\-/]+)', r'advancement \1 minecraft:\2', command)
 		else:
-			command = re.sub(r'^advancement (.*) ([A-Za-z_]+):([A-Za-z_/]+)', r'advancement \1 {}:\2/\3'.format(datapack), command)
+			command = re.sub(r'^advancement (.*) ([A-Za-z0-9_\-]+):([A-Za-z0-9_\-/]+)', r'advancement \1 {}:\2/\3'.format(datapack), command)
 
-		if re.findall(r'LootTable:"minecraft:([A-Za-z_/]+)"', command):
-			command = re.sub(r'LootTable:"minecraft:([A-Za-z_/]+)"', r'LootTable:"minecraft:\1"', command)
+		if re.findall(r'LootTable:"minecraft:([A-Za-z0-9_\-/]+)"', command):
+			command = re.sub(r'LootTable:"minecraft:([A-Za-z0-9_\-/]+)"', r'LootTable:"minecraft:\1"', command)
 		else:
-			command = re.sub(r'LootTable:"([A-Za-z_]+):([A-Za-z_/]+)"', r'LootTable:"{}:\1/\2"'.format(datapack), command)
+			command = re.sub(r'LootTable:"([A-Za-z0-9_\-]+):([A-Za-z0-9_\-/]+)"', r'LootTable:"{}:\1/\2"'.format(datapack), command)
 
 
 
@@ -563,7 +563,7 @@ def convert_command(gets, filename):
 			tmp = re.findall(r'^setblock ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([\S]+)?(?: )?(destroy|keep|replace)?(?: )?({.+})?', command)
 			command = re.sub(r'^setblock ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([\S]+)?(?: )?(destroy|keep|replace)?(?: )?({.+})?', r'setblock \1 minecraft:pl@ceh0ld3r \4', command)
 			if tmp:
-				command = re.sub(r'pl@ceh0ld3r', change_block(tmp[0][1], tmp[0][2], new_nbt(tmp[0][4])), command)
+				command = re.sub(r'pl@ceh0ld3r', change_block(tmp[0][1], tmp[0][2], tmp[0][4]), command)
 
 		if command.startswith("testforblock "):
 			tmp = re.findall(r'^testforblock ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([\S]+)?(?: )?({.*})?', command)
