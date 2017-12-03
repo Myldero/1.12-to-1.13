@@ -179,7 +179,7 @@ def change_block(block, data="", nbt=""):
 
 	#NBT data
 	if len(nbt) > 2:
-		block += nbt
+		block += new_nbt(nbt)
 
 	return block
 
@@ -191,7 +191,7 @@ def change_item(item, data, nbt):
 	elif len(data) == 0:
 		data = 0
 
-	if len(nbt) > 0:
+	if len(nbt) > 2:
 		nbt = new_nbt(nbt)
 
 
@@ -545,18 +545,18 @@ def convert_command(gets, filename):
 
 
 		#Function, advancement and loot table file locations
-		command = re.sub(r'^function ([A-Za-z_]+):([A-Za-z_/]+)', r'function {}:\1/\2'.format(datapack), command)
-		command = re.sub(r'structure_block(.+)name:(?:")?([A-Za-z_/]+)(?:")?', r'structure_block\1name:"{}:\2"'.format(datapack), command)
+		command = re.sub(r'^function ([A-Za-z0-9_\-]+):([A-Za-z0-9_\-/]+)', r'function {}:\1/\2'.format(datapack), command)
+		command = re.sub(r'structure_block(.+)name:(?:")?([A-Za-z0-9_\-/]+)(?:")?', r'structure_block\1name:"{}:\2"'.format(datapack), command)
 
-		if re.findall(r'^advancement (.*) minecraft:([A-Za-z_/]+)', command):
-			command = re.sub(r'^advancement (.*) minecraft:([A-Za-z_/]+)', r'advancement \1 minecraft:\2', command)
+		if re.findall(r'^advancement (.*) minecraft:([A-Za-z0-9_\-/]+)', command):
+			command = re.sub(r'^advancement (.*) minecraft:([A-Za-z0-9_\-/]+)', r'advancement \1 minecraft:\2', command)
 		else:
-			command = re.sub(r'^advancement (.*) ([A-Za-z_]+):([A-Za-z_/]+)', r'advancement \1 {}:\2/\3'.format(datapack), command)
+			command = re.sub(r'^advancement (.*) ([A-Za-z0-9_\-]+):([A-Za-z0-9_\-/]+)', r'advancement \1 {}:\2/\3'.format(datapack), command)
 
-		if re.findall(r'LootTable:"minecraft:([A-Za-z_/]+)"', command):
-			command = re.sub(r'LootTable:"minecraft:([A-Za-z_/]+)"', r'LootTable:"minecraft:\1"', command)
+		if re.findall(r'LootTable:"minecraft:([A-Za-z0-9_\-/]+)"', command):
+			command = re.sub(r'LootTable:"minecraft:([A-Za-z0-9_\-/]+)"', r'LootTable:"minecraft:\1"', command)
 		else:
-			command = re.sub(r'LootTable:"([A-Za-z_]+):([A-Za-z_/]+)"', r'LootTable:"{}:\1/\2"'.format(datapack), command)
+			command = re.sub(r'LootTable:"([A-Za-z0-9_\-]+):([A-Za-z0-9_\-/]+)"', r'LootTable:"{}:\1/\2"'.format(datapack), command)
 
 
 
@@ -566,7 +566,7 @@ def convert_command(gets, filename):
 			tmp = re.findall(r'^setblock ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([\S]+)?(?: )?(destroy|keep|replace)?(?: )?({.+})?', command)
 			command = re.sub(r'^setblock ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([\S]+)?(?: )?(destroy|keep|replace)?(?: )?({.+})?', r'setblock \1 minecraft:pl@ceh0ld3r \4', command)
 			if tmp:
-				command = re.sub(r'pl@ceh0ld3r', change_block(tmp[0][1], tmp[0][2], new_nbt(tmp[0][4])), command)
+				command = re.sub(r'pl@ceh0ld3r', change_block(tmp[0][1], tmp[0][2], tmp[0][4]), command)
 
 		if command.startswith("testforblock "):
 			tmp = re.findall(r'^testforblock ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([\S]+)?(?: )?({.*})?', command)
@@ -1033,23 +1033,20 @@ def convert(command, filename):
 
 
 
-
-
-
 def convert_advancement(adv):
 	adv = json.loads(adv)
 
 	try:
-		if re.findall(r'minecraft:([A-Za-z_/]+)', adv['parent']):
-			adv['parent'] = re.sub(r'minecraft:([A-Za-z_/]+)', r'minecraft:\1', adv['parent'])
+		if adv['parent'].startswith("minecraft:"):
+			adv['parent'] = re.sub(r'minecraft:([A-Za-z0-9_\-/]+)', r'minecraft:\1', adv['parent'])
 		else:
-			adv['parent'] = re.sub(r'([A-Za-z_]+):([A-Za-z_/]+)', r'{}:\1/\2'.format(datapack), adv['parent'])
+			adv['parent'] = re.sub(r'([A-Za-z0-9_\-]+):([A-Za-z0-9_\-/]+)', r'{}:\1/\2'.format(datapack), adv['parent'])
 	except:
 		pass
 
 
 	try:
-		adv['rewards']['function'] = re.sub(r'([A-Za-z_]+):([A-Za-z_/]+)', r'{}:\1/\2'.format(datapack), adv['rewards']['function'])
+		adv['rewards']['function'] = re.sub(r'([A-Za-z0-9_\-]+):([A-Za-z0-9_\-/]+)', r'{}:\1/\2'.format(datapack), adv['rewards']['function'])
 	except:
 		pass
 
@@ -1058,10 +1055,10 @@ def convert_advancement(adv):
 		newloot = []
 		for loot in adv['rewards']['loot']:
 
-			if re.findall(r'minecraft:([A-Za-z_/]+)', loot):
-				newloot += [re.sub(r'minecraft:([A-Za-z_/]+)', r'minecraft:\1', loot)]
+			if loot.startswith("minecraft:"):
+				newloot += [re.sub(r'minecraft:([A-Za-z0-9_\-/]+)', r'minecraft:\1', loot)]
 			else:
-				newloot += [re.sub(r'([A-Za-z_]+):([A-Za-z_/]+)', r'{}:\1/\2'.format(datapack), loot)]
+				newloot += [re.sub(r'([A-Za-z0-9_\-]+):([A-Za-z0-9_\-/]+)', r'{}:\1/\2'.format(datapack), loot)]
 
 		adv['rewards']['loot'] = newloot
 	except:
@@ -1086,6 +1083,72 @@ def convert_advancement(adv):
 
 
 	return json.dumps(adv, indent=4)
+
+
+
+def convert_loot_tables(lt):
+	lt = json.loads(lt)
+
+
+	try:
+		for i in range(len(lt['pools'])):
+			for j in range(len(lt['pools'][i]['entries'])):
+				
+				try:
+					if lt['pools'][i]['entries'][j]['type'] == "item":
+
+						#Item Data
+						try:
+							for k in range(len(lt['pools'][i]['entries'][j]['functions'])):
+
+								if lt['pools'][i]['entries'][j]['functions'][k]['function'] == "set_data":
+
+									if isinstance(lt['pools'][i]['entries'][j]['functions'][k]['data'], int):
+										lt['pools'][i]['entries'][j]['name'] = "minecraft:" + change_item(re.sub(r'^minecraft:', r'', lt['pools'][i]['entries'][j]['name']), str(lt['pools'][i]['entries'][j]['functions'][k]['data']), "")
+										del lt['pools'][i]['entries'][j]['functions'][k]
+
+										if len(lt['pools'][i]['entries'][j]['functions']) == 0:
+											del lt['pools'][i]['entries'][j]['functions']
+
+									break
+						except:
+							pass
+
+						#NBT Data
+						try:
+							for k in range(len(lt['pools'][i]['entries'][j]['functions'])):
+
+								if lt['pools'][i]['entries'][j]['functions'][k]['function'] == "set_nbt":
+
+									lt['pools'][i]['entries'][j]['functions'][k]['tag'] = change_nbt(lt['pools'][i]['entries'][j]['functions'][k]['tag'])
+
+									break
+						except:
+							pass
+
+
+					else:
+
+						#Loot Table name change
+						if lt['pools'][i]['entries'][j]['name'].startswith("minecraft:"):
+							lt['pools'][i]['entries'][j]['name'] = re.sub(r'minecraft:([A-Za-z0-9_\-/]+)', r'minecraft:\1', lt['pools'][i]['entries'][j]['name']).lower()
+						else:
+							lt['pools'][i]['entries'][j]['name'] = re.sub(r'([A-Za-z0-9_\-]+):([A-Za-z0-9_\-/]+)', r'{}:\1/\2'.format(datapack), lt['pools'][i]['entries'][j]['name']).lower()
+
+
+				except:
+					pass
+
+
+
+	except:
+		pass
+
+
+
+	return json.dumps(lt, indent=4)
+
+
 
 
 
@@ -1177,6 +1240,25 @@ for path, dirs, files in os.walk( os.path.join(worldpath, "datapacks", datapack,
 			with open(fullpath, 'w') as f:
 				f.write(memory)
 
+
+
+print("Converting loot tables")
+
+for path, dirs, files in os.walk( os.path.join(worldpath, "datapacks", datapack, "data", datapack, "loot_tables") ):
+	for file in files:
+		if file.endswith(".json"):
+			fullpath = os.path.join(path, file)
+
+			memory = ""
+
+			with open(fullpath, 'r') as f:
+				memory += convert_loot_tables(f.read())
+
+			with open(fullpath, 'w') as f:
+				f.write(memory)
+
+
+
 after_time = time()
-print("Done in {}".format(after_time - before_time))
+print("Done in {} seconds".format(round(after_time - before_time, 4)))
 input()
