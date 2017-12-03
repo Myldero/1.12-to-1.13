@@ -3,6 +3,11 @@ import re
 
 #Set values
 effect_id = ('speed', 'slowness', 'haste', 'mining_fatigue', 'strength', 'instant_health', 'instant_damage', 'jump_boost', 'nausea', 'regeneration', 'resistance', 'fire_resistance', 'water_breathing', 'invisibility', 'blindness', 'night_vision', 'hunger', 'weakness', 'poison', 'wither', 'health_boost', 'absorption', 'saturation', 'glowing', 'levitation', 'luck', 'unluck')
+particles = {'angryVillager': 'angry_villager', 'blockcrack': 'block', 'blockdust': 'dust', 'damageIndicator': 'damage_indicator', 'dragonbreath': 'dragon_breath', 'dripLava': 'drip_lava', 'dripWater': 'drip_water', 'droplet': 'rain', 'enchantmenttable': 'enchant', 'endRod': 'end_rod', 'explosion': 'spit', 'fallingdust': 'falling_dust', 'fireworksSpark': 'firework', 'happyVillager': 'happy_villager', 'hugeexplosion': 'explosion_emitter', 'iconcrack': 'item', 'instantSpell': 'instant_effect', 'largeexplode': 'explode', 'largesmoke': 'large_smoke', 'magicCrit': 'enchanted_hit', 'mobSpell': 'entity_effect', 'mobSpellAmbient': 'ambient_entity_effect', 'mobappearance': 'elder_guardian', 'slime': 'item_slime', 'snowballpoof': 'item_snowball', 'spell': 'effect', 'suspended': 'underwater', 'sweepAttack': 'sweep_attack', 'totem': 'totem_of_undying', 'townaura': 'mycelium', 'wake': 'fishing', 'witchMagic': 'witch'}
+
+blockstates = dict(line.rstrip().split(":", 1) for line in open(os.path.join(".", "blockstates.txt"), 'r'))
+blockstates_other = dict(line.rstrip().split(" ", 1) for line in open(os.path.join(".", "blockstates_other.txt"), 'r'))
+itemvalues = dict(line.rstrip().split(":", 1) for line in open(os.path.join(".", "itemvalues.txt"), 'r'))
 
 def change_block(block, data="", nbt=""):
 	if data.isdigit():
@@ -14,56 +19,52 @@ def change_block(block, data="", nbt=""):
 		tmp = data
 		data = 0
 
-		with open(os.path.join(".", "blockstates_other.txt"), 'r') as f:
-			for line in f:
-				if re.findall(r'^{} '.format(block), line):
+		if block in blockstates_other:
 
-					block, default, *states = line.split()
+			default, *states = blockstates_other[block].split()
 
-					if tmp == "default": #Just so it gets the right default value if data is "default"
-						tmp = default
+			if tmp == "default": #Just so it gets the right default value if data is "default"
+				tmp = default
 
-					block_args = {}
+			block_args = {}
 
-					for arg in tmp.split(","):
-						key,value = arg.split("=")
-						block_args[key] = value
+			for arg in tmp.split(","):
+				key,value = arg.split("=")
+				block_args[key] = value
 
-					for arg in default.split(","):
-						key,value = arg.split("=")
-						if key not in block_args:
-							block_args[key] = value
+			for arg in default.split(","):
+				key,value = arg.split("=")
+				if key not in block_args:
+					block_args[key] = value
 
 
 
-					for state in states:
-						state,state_data = state.split(":")
-						other_args = {}
+			for state in states:
+				state,state_data = state.split(":")
+				other_args = {}
 
-						for arg in state.split(","):
-							key,value = arg.split("=")
-							other_args[key] = value
+				for arg in state.split(","):
+					key,value = arg.split("=")
+					other_args[key] = value
 
-						if block_args == other_args:
-							data = int(state_data)
-							break
-
+				if block_args == other_args:
+					data = int(state_data)
 					break
+
 
 	#Block State
 	if data in ['-1','*']:
 		#This will change if it becomes a possibility in 1.13. So far, it isn't.
 		pass
 	elif isinstance(data, int):
-		with open(os.path.join(".", "blockstates.txt"), 'r') as f:
-			for line in f:
-				if re.findall(r'^{}:'.format(block), line): #Find block in blockstates.txt
-					states = line.rstrip().split(":")[1].split(" ") #Gets list of block states
-					if states[data % len(states)].isdigit():
-						block = states[ int(states[data % len(states)]) ]
-					else:
-						block = states[data % len(states)] #This picks the correct block state
-					break
+		
+		if block in blockstates:
+			states = blockstates[block].split() #Gets list of block states
+
+			if states[data % len(states)].isdigit():
+				block = states[ int(states[data % len(states)]) ]
+			else:
+				block = states[data % len(states)] #This picks the correct block state
 
 		if block.startswith("skull"):
 			skulls = ['skeleton_skull', 'wither_skeleton_skull', 'zombie_head', 'player_head', 'creeper_head', 'dragon_head']
@@ -173,14 +174,6 @@ def change_block(block, data="", nbt=""):
 			nbt = ""
 
 
-
-
-
-
-
-
-
-
 	#NBT data
 	if len(nbt) > 2:
 		block += nbt
@@ -208,22 +201,18 @@ def change_item(item, data, nbt):
 			item += "}"
 
 		return item
-	if item == "spawn_egg":
+	
+	elif item == "spawn_egg":
 
 		tmp = re.findall(r'entitytag:{id:(?:\")?(?:minecraft:)?([a-z_]+)', nbt.lower())
 		if tmp:
 			return tmp[0] + "_" + item
 
+	else:
+		if item in itemvalues:
+			values = itemvalues[item].split()
 
-
-	elif data > 0:
-		with open(os.path.join(".", "itemvalues.txt"), 'r') as f:
-			for line in f:
-				if re.findall(r'^{}:'.format(item), line): #Find block in itemvalues.txt
-					values = line.rstrip().split(":")[1].split(" ") #Gets list of block states
-
-					return values[data % len(values)] + nbt #Returns the correct item and nbt concatenated
-
+			return values[data % len(values)] + nbt #Returns the correct item and nbt concatenated
 
 
 	return item + nbt #Returns the item and nbt concatenated
@@ -375,29 +364,22 @@ def get_nbt_list(nbt, nbt_type):
 			for i in range(len(nbt_list)):
 
 				block = re.findall(r'(?:minecraft:)?([a-z_]+)',nbt_list[i])[0]
-				with open(os.path.join(".", "blockstates.txt"), 'r') as f:
-					for line in f:
-						if re.findall(r'^{}:'.format(block), line): #Find block in blockstates.txt
-							states = ["minecraft:"+i for i in set(re.findall(r'(?:\:| )([a-z_]+)', line))]
-							print(states)
-							if states[0] == "minecraft:skull":
-								states = ['minecraft:skeleton_skull', 'minecraft:wither_skeleton_skull', 'minecraft:zombie_head', 'minecraft:player_head', 'minecraft:creeper_head', 'minecraft:dragon_head', 'minecraft:skeleton_wall_skull', 'minecraft:wither_skeleton_wall_skull', 'minecraft:zombie_wall_head', 'minecraft:player_wall_head', 'minecraft:creeper_wall_head', 'minecraft:dragon_wall_head']
-							elif states[0] == "minecraft:banner":
-								states = ['minecraft:black_banner', 'minecraft:red_banner', 'minecraft:green_banner', 'minecraft:brown_banner', 'minecraft:blue_banner', 'minecraft:purple_banner', 'minecraft:cyan_banner', 'minecraft:light_gray_banner', 'minecraft:gray_banner', 'minecraft:pink_banner', 'minecraft:lime_banner', 'minecraft:yellow_banner', 'minecraft:light_blue_banner', 'minecraft:magenta_banner', 'minecraft:orange_banner', 'minecraft:white_banner']
-							elif states[0] == "minecraft:wall_banner":
-								states = ['minecraft:black_wall_banner', 'minecraft:red_wall_banner', 'minecraft:green_wall_banner', 'minecraft:brown_wall_banner', 'minecraft:blue_wall_banner', 'minecraft:purple_wall_banner', 'minecraft:cyan_wall_banner', 'minecraft:light_gray_wall_banner', 'minecraft:gray_wall_banner', 'minecraft:pink_wall_banner', 'minecraft:lime_wall_banner', 'minecraft:yellow_wall_banner', 'minecraft:light_blue_wall_banner', 'minecraft:magenta_wall_banner', 'minecraft:orange_wall_banner', 'minecraft:white_wall_banner']
-							elif states[0] == "minecraft:bed":
-								states = ['minecraft:white_bed', 'minecraft:orange_bed', 'minecraft:magenta_bed', 'minecraft:light_blue_bed', 'minecraft:yellow_bed', 'minecraft:lime_bed', 'minecraft:pink_bed', 'minecraft:gray_bed', 'minecraft:light_gray_bed', 'minecraft:cyan_bed', 'minecraft:purple_bed', 'minecraft:blue_bed', 'minecraft:brown_bed', 'minecraft:green_bed', 'minecraft:red_bed', 'minecraft:black_bed']
-							elif states[0] == "minecraft:flower_pot":
-								states = ['minecraft:flower_pot', 'minecraft:potted_poppy', 'minecraft:potted_dandelion', 'minecraft:potted_oak_sapling', 'minecraft:potted_spruce_sapling', 'minecraft:potted_birch_sapling', 'minecraft:potted_jungle_sapling', 'minecraft:potted_red_mushroom', 'minecraft:potted_brown_mushroom', 'minecraft:potted_cactus', 'minecraft:potted_dead_bush', 'minecraft:potted_fern', 'minecraft:potted_acacia_sapling', 'minecraft:potted_dark_oak_sapling', 'minecraft:potted_blue_orchid', 'minecraft:potted_allium', 'minecraft:potted_azure_bluet', 'minecraft:potted_red_tulip', 'minecraft:potted_orange_tulip', 'minecraft:potted_white_tulip', 'minecraft:potted_pink_tulip', 'minecraft:potted_oxeye_daisy']
+				
+				if block in blockstates:
+					states = ["minecraft:"+i for i in set(re.findall(r'(?:^| )([a-z_]+)', blockstates[block]))] #Gets list of unique block names
 
-							nbt_list[i] = "\"" + "\",\"".join(states) + "\""
+					if states[0] == "minecraft:skull":
+						states = ['minecraft:skeleton_skull', 'minecraft:wither_skeleton_skull', 'minecraft:zombie_head', 'minecraft:player_head', 'minecraft:creeper_head', 'minecraft:dragon_head', 'minecraft:skeleton_wall_skull', 'minecraft:wither_skeleton_wall_skull', 'minecraft:zombie_wall_head', 'minecraft:player_wall_head', 'minecraft:creeper_wall_head', 'minecraft:dragon_wall_head']
+					elif states[0] == "minecraft:banner":
+						states = ['minecraft:black_banner', 'minecraft:red_banner', 'minecraft:green_banner', 'minecraft:brown_banner', 'minecraft:blue_banner', 'minecraft:purple_banner', 'minecraft:cyan_banner', 'minecraft:light_gray_banner', 'minecraft:gray_banner', 'minecraft:pink_banner', 'minecraft:lime_banner', 'minecraft:yellow_banner', 'minecraft:light_blue_banner', 'minecraft:magenta_banner', 'minecraft:orange_banner', 'minecraft:white_banner']
+					elif states[0] == "minecraft:wall_banner":
+						states = ['minecraft:black_wall_banner', 'minecraft:red_wall_banner', 'minecraft:green_wall_banner', 'minecraft:brown_wall_banner', 'minecraft:blue_wall_banner', 'minecraft:purple_wall_banner', 'minecraft:cyan_wall_banner', 'minecraft:light_gray_wall_banner', 'minecraft:gray_wall_banner', 'minecraft:pink_wall_banner', 'minecraft:lime_wall_banner', 'minecraft:yellow_wall_banner', 'minecraft:light_blue_wall_banner', 'minecraft:magenta_wall_banner', 'minecraft:orange_wall_banner', 'minecraft:white_wall_banner']
+					elif states[0] == "minecraft:bed":
+						states = ['minecraft:white_bed', 'minecraft:orange_bed', 'minecraft:magenta_bed', 'minecraft:light_blue_bed', 'minecraft:yellow_bed', 'minecraft:lime_bed', 'minecraft:pink_bed', 'minecraft:gray_bed', 'minecraft:light_gray_bed', 'minecraft:cyan_bed', 'minecraft:purple_bed', 'minecraft:blue_bed', 'minecraft:brown_bed', 'minecraft:green_bed', 'minecraft:red_bed', 'minecraft:black_bed']
+					elif states[0] == "minecraft:flower_pot":
+						states = ['minecraft:flower_pot', 'minecraft:potted_poppy', 'minecraft:potted_dandelion', 'minecraft:potted_oak_sapling', 'minecraft:potted_spruce_sapling', 'minecraft:potted_birch_sapling', 'minecraft:potted_jungle_sapling', 'minecraft:potted_red_mushroom', 'minecraft:potted_brown_mushroom', 'minecraft:potted_cactus', 'minecraft:potted_dead_bush', 'minecraft:potted_fern', 'minecraft:potted_acacia_sapling', 'minecraft:potted_dark_oak_sapling', 'minecraft:potted_blue_orchid', 'minecraft:potted_allium', 'minecraft:potted_azure_bluet', 'minecraft:potted_red_tulip', 'minecraft:potted_orange_tulip', 'minecraft:potted_white_tulip', 'minecraft:potted_pink_tulip', 'minecraft:potted_oxeye_daisy']
 
-
-
-
-							
-
+					nbt_list[i] = "\"" + "\",\"".join(states) + "\""
 
 
 		start_nbt, end_nbt = match_index+len(nbt_type)+1, end_index
@@ -490,35 +472,46 @@ def convert_command(gets, filename):
 
 		#Teams now
 		command = re.sub(r'^scoreboard teams', r'team', command)
+
+
+
+		#Particles
+		tmp = re.findall(r'^particle (?:minecraft\:)?([a-zA-Z0-9_]+)', command)
+		if tmp:
+			command = re.sub(r'^particle (?:minecraft\:)?([a-zA-Z0-9_]+)', r'particle minecraft:pl@ceh0ld3r', command)
+			if tmp[0] in particles:
+				command = re.sub(r'pl@ceh0ld3r', particles[tmp[0]], command)
+			else:
+				command = re.sub(r'pl@ceh0ld3r', tmp[0], command)
 		
 
 
 		#Give, clear and replaceitem
 		if command.startswith("give"):
-			#Fill replace
+
 			tmp = re.findall(r'^give (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9]+)?(?: )?([0-9]+)?(?: )?({.*})?', command)
-			command = re.sub(r'^give (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9]+)?(?: )?([0-9]+)?(?: )?({.*})?', r'give \1 minecraft:pl@ceh0ld3r \3', command)
 			if tmp:
+				command = re.sub(r'^give (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9]+)?(?: )?([0-9]+)?(?: )?({.*})?', r'give \1 minecraft:pl@ceh0ld3r \3', command)
 				command = re.sub(r'pl@ceh0ld3r', change_item(tmp[0][1], tmp[0][3], tmp[0][4]), command)
 
 		if command.startswith("clear"):
-			#Fill replace
+
 			tmp = re.findall(r'^clear (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9]+)?(?: )?([0-9]+)?(?: )?({.*})?', command)
-			command = re.sub(r'^clear (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9]+)?(?: )?([0-9]+)?(?: )?({.*})?', r'clear \1 minecraft:pl@ceh0ld3r \4', command)
 			if tmp:
+				command = re.sub(r'^clear (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9]+)?(?: )?([0-9]+)?(?: )?({.*})?', r'clear \1 minecraft:pl@ceh0ld3r \4', command)
 				command = re.sub(r'pl@ceh0ld3r', change_item(tmp[0][1], tmp[0][2], tmp[0][4]), command)
 
 
 		if command.startswith("replaceitem"):
-			#Fill replace
+
 			tmp = re.findall(r'^replaceitem entity (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) slot\.([a-z0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9]+)?(?: )?([0-9]+)?(?: )?({.*})?', command)
-			command = re.sub(r'^replaceitem entity (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) slot\.([a-z0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9]+)?(?: )?([0-9]+)?(?: )?({.*})?', r'replaceitem entity \1 \2 minecraft:pl@ceh0ld3r \4', command)
 			if tmp:
+				command = re.sub(r'^replaceitem entity (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) slot\.([a-z0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9]+)?(?: )?([0-9]+)?(?: )?({.*})?', r'replaceitem entity \1 \2 minecraft:pl@ceh0ld3r \4', command)
 				command = re.sub(r'pl@ceh0ld3r', change_item(tmp[0][2], tmp[0][4], tmp[0][5]), command)
 			else:
 				tmp = re.findall(r'^replaceitem block ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) slot\.([a-z0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9]+)?(?: )?([0-9]+)?(?: )?({.*})?', command)
-				command = re.sub(r'^replaceitem block ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) slot\.([a-z0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9]+)?(?: )?([0-9]+)?(?: )?({.*})?', r'replaceitem block \1 \2 minecraft:pl@ceh0ld3r \4', command)
 				if tmp:
+					command = re.sub(r'^replaceitem block ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) slot\.([a-z0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9]+)?(?: )?([0-9]+)?(?: )?({.*})?', r'replaceitem block \1 \2 minecraft:pl@ceh0ld3r \4', command)
 					command = re.sub(r'pl@ceh0ld3r', change_item(tmp[0][2], tmp[0][4], tmp[0][5]), command)
 
 
@@ -528,8 +521,8 @@ def convert_command(gets, filename):
 
 			#Effect ID's
 			tmp = re.findall(r'^effect (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) (?:minecraft\:)?(speed|slowness|haste|mining_fatigue|strength|instant_health|instant_damage|jump_boost|nausea|regeneration|resistance|fire_resistance|water_breathing|invisibility|blindness|night_vision|hunger|weakness|poison|wither|health_boost|absorption|saturation|glowing|levitation|luck|unluck)', command)
-			command = re.sub(r'^effect (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) (?:minecraft\:)?(speed|slowness|haste|mining_fatigue|strength|instant_health|instant_damage|jump_boost|nausea|regeneration|resistance|fire_resistance|water_breathing|invisibility|blindness|night_vision|hunger|weakness|poison|wither|health_boost|absorption|saturation|glowing|levitation|luck|unluck)', r'effect \1 pl@ceh0ld3r', command)
 			if tmp:
+				command = re.sub(r'^effect (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) (?:minecraft\:)?(speed|slowness|haste|mining_fatigue|strength|instant_health|instant_damage|jump_boost|nausea|regeneration|resistance|fire_resistance|water_breathing|invisibility|blindness|night_vision|hunger|weakness|poison|wither|health_boost|absorption|saturation|glowing|levitation|luck|unluck)', r'effect \1 pl@ceh0ld3r', command)
 				command = re.sub(r'pl@ceh0ld3r', str(effect_id.index(tmp[0][1]) + 1), command)
 
 
@@ -609,6 +602,8 @@ def convert_command(gets, filename):
 		if tmp:
 			command = re.sub(r'pl@ceh0ld3r', tmp[0][1].lower(), command)
 
+
+		command = re.sub(r'^summon (minecraft\:)?([A-Za-z_]+) ({.*})', r'summon \1\2 ~ ~ ~ \3', command)
 
 		tmp = re.findall(r'^summon (minecraft\:)?([A-Za-z_]+) ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) ({.*})', command)
 		command = re.sub(r'^summon (minecraft\:)?([A-Za-z_]+) ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) ({.*})', r'summon \1\2 \3 pl@ceh0ld3r', command)
@@ -823,7 +818,6 @@ def convert(command, filename):
 		command = re.sub(r'@([a-z])\[([A-Za-z0-9=\.,_\-\!]*)\]', r'@\1[pl@ceh0ld3r]', command)
 		for match in tmp:
 			selector = match[1].split(",")
-
 			''' Turned off now because of a change where dx, dy and dz aren't doubles anymore. Will wait and see first though
 			#dx dy dz
 			if any(i in match[1] for i in ["dx","dy","dz"]):
@@ -888,11 +882,12 @@ def convert(command, filename):
 
 					#Limit
 				elif arg[0] == "c":
-					if int(arg[1]) < 0:
-						arg[1] = abs(int(arg[1]))
-						selector += ["sort=furthest"]
-					else:
-						selector += ["sort=nearest"]
+					if match[0] != "r":
+						if int(arg[1]) < 0:
+							arg[1] = abs(int(arg[1]))
+							selector += ["sort=furthest"]
+						else:
+							selector += ["sort=nearest"]
 
 					selector[i] = "{}={}".format("limit", arg[1])
 
