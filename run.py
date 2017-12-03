@@ -1,3 +1,4 @@
+from time import time
 import shutil
 import json
 import os
@@ -1095,6 +1096,7 @@ datapack = input("Datapack namespace (a-z and underscore): ").rstrip()
 while not re.findall(r'^[a-z0-9_\-]+$', datapack):
 	datapack = input("Datapack namespace [a-z0-9_-]: ")
 
+before_time = time()
 
 print("Moving directories")
 
@@ -1176,6 +1178,5 @@ for path, dirs, files in os.walk( os.path.join(worldpath, "datapacks", datapack,
 				f.write(memory)
 
 after_time = time()
-print("Done")
-print(after_time - before_time)
+print("Done in {}".format(after_time - before_time))
 input()
