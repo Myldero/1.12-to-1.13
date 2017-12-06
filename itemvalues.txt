@@ -64,3 +64,5 @@ wooden_button:oak_button
 wooden_pressure_plate:oak_pressure_plate
 wooden_trapdoor:oak_trapdoor
 reeds:sugar_cane
+pumpkin:carved_pumpkin
+lit_pumpkin:jack_o_lantern
