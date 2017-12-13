@@ -12,7 +12,6 @@ It currently can't convert structures so you'll have to load them into your worl
 
 It can't convert the stats command at the moment, simply because it's too big a change. You'll have to set up the execute store command yourself.
 
-There might be problems with blocks if you used something like `detect ~ ~ ~ wool * ...` since wool has been split off into different blocks instead of just states. As it seems, there won't be added an ability to target multiple blocks in one command, so you'll have to work around this one yourself too.
 
 #### Example command:
 
