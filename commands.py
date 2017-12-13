@@ -1,15 +1,25 @@
 import os
+import json
+import errno
 import re
 
 #Set values
 effect_id = ('speed', 'slowness', 'haste', 'mining_fatigue', 'strength', 'instant_health', 'instant_damage', 'jump_boost', 'nausea', 'regeneration', 'resistance', 'fire_resistance', 'water_breathing', 'invisibility', 'blindness', 'night_vision', 'hunger', 'weakness', 'poison', 'wither', 'health_boost', 'absorption', 'saturation', 'glowing', 'levitation', 'luck', 'unluck')
-particles = {'angryVillager': 'angry_villager', 'blockcrack': 'block', 'blockdust': 'dust', 'damageIndicator': 'damage_indicator', 'dragonbreath': 'dragon_breath', 'dripLava': 'drip_lava', 'dripWater': 'drip_water', 'droplet': 'rain', 'enchantmenttable': 'enchant', 'endRod': 'end_rod', 'explode': 'poof', 'fallingdust': 'falling_dust', 'fireworksSpark': 'firework', 'happyVillager': 'happy_villager', 'hugeexplosion': 'explosion_emitter', 'iconcrack': 'item', 'instantSpell': 'instant_effect', 'largeexplode': 'explosion', 'largesmoke': 'large_smoke', 'magicCrit': 'enchanted_hit', 'mobSpell': 'entity_effect', 'mobSpellAmbient': 'ambient_entity_effect', 'mobappearance': 'elder_guardian', 'slime': 'item_slime', 'snowballpoof': 'item_snowball', 'spell': 'effect', 'suspended': 'underwater', 'sweepAttack': 'sweep_attack', 'totem': 'totem_of_undying', 'townaura': 'mycelium', 'wake': 'fishing', 'witchMagic': 'witch'}
+particles = {'angryVillager': 'angry_villager', 'blockcrack': 'block', 'blockdust': 'dust', 'damageIndicator': 'damage_indicator', 'dragonbreath': 'dragon_breath', 'dripLava': 'drip_lava', 'dripWater': 'drip_water', 'droplet': 'rain', 'enchantmenttable': 'enchant', 'endRod': 'end_rod', 'explode': 'poof', 'fallingdust': 'falling_dust', 'fireworksSpark': 'firework', 'happyVillager': 'happy_villager', 'hugeexplosion': 'explosion_emitter', 'iconcrack': 'item', 'instantSpell': 'instant_effect', 'largeexplode': 'explosion', 'largesmoke': 'large_smoke', 'magicCrit': 'enchanted_hit', 'mobSpell': 'entity_effect', 'mobSpellAmbient': 'ambient_entity_effect', 'mobappearance': 'elder_guardian', 'reddust': 'dust 255 0 0 1', 'slime': 'item_slime', 'snowballpoof': 'item_snowball', 'spell': 'effect', 'suspended': 'underwater', 'sweepAttack': 'sweep_attack', 'totem': 'totem_of_undying', 'townaura': 'mycelium', 'wake': 'fishing', 'witchMagic': 'witch'}
+objective_names = {'drop': 'drop', 'swimOneCm': 'swim_one_cm', 'walkOneCm': 'walk_one_cm', 'recordPlayed': 'play_record', 'noteblockPlayed': 'play_noteblock', 'deaths': 'deaths', 'leaveGame': 'leave_game', 'damageDealt': 'damage_dealt', 'fishCaught': 'fish_caught', 'trappedChestTriggered': 'trigger_trapped_chest', 'tradedWithVillager': 'traded_with_villager', 'playerKills': 'player_kills', 'damageTaken': 'damage_taken', 'sneakTime': 'sneak_time', 'flowerPotted': 'pot_flower', 'playOneMinute': 'play_one_minute', 'enderchestOpened': 'open_enderchest', 'armorCleaned': 'clean_armor', 'aviateOneCm': 'aviate_one_cm', 'beaconInteraction': 'interact_with_beacon', 'pigOneCm': 'pig_one_cm', 'craftingTableInteraction': 'interact_with_crafting_table', 'sleepInBed': 'sleep_in_bed', 'talkedToVillager': 'talked_to_villager', 'brewingstandInteraction': 'interact_with_brewingstand', 'cakeSlicesEaten': 'eat_cake_slice', 'flyOneCm': 'fly_one_cm', 'chestOpened': 'open_chest', 'furnaceInteraction': 'interact_with_furnace', 'hopperInspected': 'inspect_hopper', 'horseOneCm': 'horse_one_cm', 'animalsBred': 'animals_bred', 'shulkerBoxOpened': 'open_shulker_box', 'jump': 'jump', 'dropperInspected': 'inspect_dropper', 'climbOneCm': 'climb_one_cm', 'timeSinceDeath': 'time_since_death', 'bannerCleared': 'clean_banner', 'mobKills': 'mob_kills', 'cauldronFilled': 'fill_cauldron', 'itemEnchanted': 'enchant_item', 'crouchOneCm': 'crouch_one_cm', 'sprintOneCm': 'sprint_one_cm', 'fallOneCm': 'fall_one_cm', 'cauldronUsed': 'use_cauldron', 'noteblockTuned': 'tune_noteblock', 'minecartOneCm': 'minecart_one_cm', 'boatOneCm': 'boat_one_cm', 'diveOneCm': 'dive_one_cm'}
+entity_names = {'Item': 'item', 'XPOrb': 'xp_orb', 'LeashKnot': 'leash_knot', 'Enderman': 'enderman', 'Endermite': 'endermite', 'Horse': 'horse', 'LavaSlime': 'magma_cube', 'WitherSkeleton': 'wither_skeleton', 'EyeOfEnderSignal': 'eye_of_ender_signal', 'FallingSand': 'falling_block', 'MinecartRideable': 'minecart', 'Spider': 'spider', 'MinecartSpawner': 'spawner_minecart', 'MushroomCow': 'mooshroom', 'Guardian': 'guardian', 'Skeleton': 'skeleton', 'ThrownExpBottle': 'xp_bottle', 'EnderDragon': 'ender_dragon', 'Witch': 'witch', 'Arrow': 'arrow', 'Snowball': 'snowball', 'EnderCrystal': 'ender_crystal', 'Zombie': 'zombie', 'Giant': 'giant', 'ArmorStand': 'armor_stand', 'ThrownEnderpearl': 'ender_pearl', 'CaveSpider': 'cave_spider', 'Silverfish': 'silverfish', 'WitherBoss': 'wither', 'Bat': 'bat', 'ElderGuardian': 'elder_guardian', 'Donkey': 'donkey', 'ItemFrame': 'item_frame', 'Cow': 'cow', 'SmallFireball': 'small_fireball', 'ThrownEgg': 'egg', 'Shulker': 'shulker', 'MinecartFurnace': 'furnace_minecart', 'WitherSkull': 'wither_skull', 'Creeper': 'creeper', 'Villager': 'villager', 'ZombieHorse': 'zombie_horse', 'Fireball': 'fireball', 'SpectralArrow': 'spectral_arrow', 'MinecartHopper': 'hopper_minecart', 'Painting': 'painting', 'Blaze': 'blaze', 'Chicken': 'chicken', 'DragonFireball': 'dragon_fireball', 'Squid': 'squid', 'PrimedTnt': 'tnt', 'SnowMan': 'snowman', 'ThrownPotion': 'potion', 'ZombieVillager': 'zombie_villager', 'Slime': 'slime', 'Mule': 'mule', 'MinecartChest': 'chest_minecart', 'VillagerGolem': 'villager_golem', 'PolarBear': 'polar_bear', 'PigZombie': 'zombie_pigman', 'SkeletonHorse': 'skeleton_horse', 'Ghast': 'ghast', 'Husk': 'husk', 'MinecartTNT': 'tnt_minecart', 'Boat': 'boat', 'Rabbit': 'rabbit', 'FireworksRocketEntity': 'fireworks_rocket', 'AreaEffectCloud': 'area_effect_cloud', 'MinecartCommandBlock': 'commandblock_minecart', 'Ozelot': 'ocelot', 'Stray': 'stray', 'Wolf': 'wolf', 'ShulkerBullet': 'shulker_bullet', 'Pig': 'pig', 'Sheep': 'sheep'}
 
 blockstates = dict(line.rstrip().split(":", 1) for line in open(os.path.join(".", "blockstates.txt"), 'r'))
 blockstates_other = dict(line.rstrip().split(" ", 1) for line in open(os.path.join(".", "blockstates_other.txt"), 'r'))
 itemvalues = dict(line.rstrip().split(":", 1) for line in open(os.path.join(".", "itemvalues.txt"), 'r'))
 
-def change_block(block, data="", nbt=""):
+colors = ['white', 'orange', 'magenta', 'light_blue', 'yellow', 'lime', 'pink', 'gray', 'light_gray', 'cyan', 'purple', 'blue', 'brown', 'green', 'red', 'black']
+skulls = ['skeleton_skull', 'wither_skeleton_skull', 'zombie_head', 'player_head', 'creeper_head', 'dragon_head']
+wall_skulls = ['skeleton_wall_skull', 'wither_skeleton_wall_skull', 'zombie_wall_head', 'player_wall_head', 'creeper_wall_head', 'dragon_wall_head']
+flowers = {'red_flower 0': 'poppy', 'yellow_flower 0': 'dandelion', 'sapling 0': 'oak_sapling', 'sapling 1': 'spruce_sapling', 'sapling 2': 'birch_sapling', 'sapling 3': 'jungle_sapling', 'red_mushroom 0': 'red_mushroom', 'brown_mushroom 0': 'brown_mushroom', 'cactus 0': 'cactus', 'deadbush 0': 'dead_bush', 'tallgrass 2': 'fern', 'sapling 4': 'acacia_sapling', 'sapling 5': 'dark_oak_sapling', 'red_flower 1': 'blue_orchid', 'red_flower 2': 'allium', 'red_flower 3': 'azure_bluet', 'red_flower 4': 'red_tulip', 'red_flower 5': 'orange_tulip', 'red_flower 6': 'white_tulip', 'red_flower 7': 'pink_tulip', 'red_flower 8': 'oxeye_daisy'}
+mobs = ['bat', 'blaze', 'cave_spider', 'chicken', 'cow', 'creeper', 'donkey', 'elder_guardian', 'enderman', 'endermite', 'evocation_illager', 'ghast', 'guardian', 'horse', 'husk', 'llama', 'magma_cube', 'mooshroom', 'mule', 'ocelot', 'parrot', 'pig', 'polar_bear', 'rabbit', 'sheep', 'shulker', 'silverfish', 'skeleton', 'skeleton_horse', 'slime', 'spider', 'squid', 'stray', 'vex', 'villager', 'vindication_illager', 'witch', 'wither_skeleton', 'wolf', 'zombie', 'zombie_horse', 'zombie_pigman', 'zombie_villager']
+
+def change_block(block, data="", nbt="", use_tags=True):
 	block = block.lower()
 
 	if data.isdigit():
@@ -17,7 +27,7 @@ def change_block(block, data="", nbt=""):
 	elif len(data) == 0:
 		data = 0
 
-	elif data not in ['-1','*']: #Just to take everything where there's already been used something like color=red
+	elif data not in ['-1','*']: #Just to take everything where there's already been used something like "color=red"
 		tmp = data
 		data = 0
 
@@ -55,9 +65,53 @@ def change_block(block, data="", nbt=""):
 
 
 	#Block State
-	if data in ['-1','*']:
-		#This will change if it becomes a possibility in 1.13. So far, it isn't.
-		pass
+	if data in ['-1','*'] and (block in blockstates or block == "flower_pot"):
+		
+		if block == "skull":
+			all_blocks = ["minecraft:" + i for i in skulls + wall_skulls]
+		
+		elif block == "banner":
+			all_blocks = ["minecraft:" + i + "_banner" for i in colors]
+			all_blocks = ["minecraft:" + i + "_wall_banner" for i in colors]
+		
+		elif block == "bed":
+			all_blocks = ["minecraft:" + i + "_bed" for i in colors]
+		
+		elif block == "flower_pot":
+			all_blocks = ["minecraft:potted_" + flowers[i] for i in flowers]
+
+		else:
+			all_blocks = list(set(["minecraft:" + re.findall(r'^[a-z_]+', i)[0] for i in blockstates[block].split() if re.findall(r'^[a-z_]', i)]))
+
+		if len(all_blocks) > 1:
+
+			if use_tags == False:
+				return "#"
+
+
+			if block == "wool":
+				block = "#minecraft:wool"
+			
+			elif 'worldpath' in globals(): #This var is only created in run.py
+
+				filepath = os.path.join(worldpath, "datapacks", datapack, "data", datapack, "tags", "blocks", block+".json")
+
+				try:
+				    open(filepath, 'r')
+				except IOError:
+				    
+					with open(filepath, 'w+') as f:
+						f.write( json.dumps( {"values": all_blocks} , indent=4) )
+
+				block = "#{}:{}".format(datapack, block)
+
+			else:
+				block = "#{}:{}".format(datapack, block)
+		else:
+			block = re.sub(r'^minecraft:', r'', all_blocks[0])
+
+
+		
 	elif isinstance(data, int):
 		
 		if block in blockstates:
@@ -68,9 +122,9 @@ def change_block(block, data="", nbt=""):
 			else:
 				block = states[data % len(states)] #This picks the correct block state
 
+		#Special cases (love those)
 		if block.startswith("skull"):
-			skulls = ['skeleton_skull', 'wither_skeleton_skull', 'zombie_head', 'player_head', 'creeper_head', 'dragon_head']
-
+			
 			rotation = 0
 			skull_type = 0
 
@@ -104,8 +158,7 @@ def change_block(block, data="", nbt=""):
 
 
 		elif block.startswith("wall_skull"):
-			wall_skulls = ['skeleton_wall_skull', 'wither_skeleton_wall_skull', 'zombie_wall_head', 'player_wall_head', 'creeper_wall_head', 'dragon_wall_head']
-
+			
 			skull_type = 0
 
 			tmp = re.findall(r'SkullType:([0-9])', nbt)
@@ -121,13 +174,12 @@ def change_block(block, data="", nbt=""):
 			nbt = ""
 
 		elif block.startswith("wall_banner") or block.startswith("banner"):
-			colors = ['black', 'red', 'green', 'brown', 'blue', 'purple', 'cyan', 'light_gray', 'gray', 'pink', 'lime', 'yellow', 'light_blue', 'magenta', 'orange', 'white']
+			
 			color = 0
-
 
 			tmp = re.findall(r'Base:([0-9]+)', nbt)
 			if tmp:
-				color = int(tmp[0][0])
+				color = 15 - int(tmp[0][0])
 
 				nbt = re.sub(r'(,)?Base:([0-9])(b)?(,)?', r',', nbt)
 				nbt = re.sub(r'^{,', r'{', nbt)
@@ -137,7 +189,7 @@ def change_block(block, data="", nbt=""):
 			block = colors[color] + "_" + block
 
 		elif block.startswith("bed"):
-			colors = ['white', 'orange', 'magenta', 'light_blue', 'yellow', 'lime', 'pink', 'gray', 'light_gray', 'cyan', 'purple', 'blue', 'brown', 'green', 'red', 'black']
+			
 			color = 0
 			tmp = re.findall(r'color:([0-9]+)', nbt, flags=re.IGNORECASE)
 			if tmp:
@@ -157,10 +209,9 @@ def change_block(block, data="", nbt=""):
 
 		elif block.startswith("flower_pot"):
 
-			flowers = {'red_flower 0': 'poppy', 'yellow_flower 0': 'dandelion', 'sapling 0': 'oak_sapling', 'sapling 1': 'spruce_sapling', 'sapling 2': 'birch_sapling', 'sapling 3': 'jungle_sapling', 'red_mushroom 0': 'red_mushroom', 'brown_mushroom 0': 'brown_mushroom', 'cactus 0': 'cactus', 'deadbush 0': 'dead_bush', 'tallgrass 2': 'fern', 'sapling 4': 'acacia_sapling', 'sapling 5': 'dark_oak_sapling', 'red_flower 1': 'blue_orchid', 'red_flower 2': 'allium', 'red_flower 3': 'azure_bluet', 'red_flower 4': 'red_tulip', 'red_flower 5': 'orange_tulip', 'red_flower 6': 'white_tulip', 'red_flower 7': 'pink_tulip', 'red_flower 8': 'oxeye_daisy'}
 			flower_id = "air"
 			flower_data = 0
-			#{Item:"minecraft:red_flower",Data:0}
+
 			tmp = re.findall(r'Item:(?:\")?(?:minecraft:)?([a-z_]+)', nbt, flags=re.IGNORECASE)
 			if tmp:
 				flower_id = tmp[0]
@@ -182,7 +233,7 @@ def change_block(block, data="", nbt=""):
 
 	return block
 
-def change_item(item, data, nbt):
+def change_item(item, data, nbt, use_tags=True):
 	item = item.lower()
 
 	if re.findall(r'^[0-9\-]+$', data):
@@ -195,16 +246,52 @@ def change_item(item, data, nbt):
 	if len(nbt) > 2:
 		nbt = new_nbt(nbt)
 
-	if data != -1 and any(item.endswith(i) for i in ("filled_map","shield","sword","shovel","pickaxe","hoe","axe","flint_and_steel","helmet","chestplate","leggings","boots","bow","fishing_rod","shears")):
-		item += "{Damage:"+str(data)+"s"
+	if any(item.endswith(i) for i in ("filled_map","shield","sword","shovel","pickaxe","hoe","axe","flint_and_steel","helmet","chestplate","leggings","boots","bow","fishing_rod","shears")):
+		if data != -1:
+			item += "{Damage:"+str(data)+"s"
 
-		if len(nbt) > 0:
-			item += ","+nbt[1:]
-		else:
-			item += "}"
+			if len(nbt) > 0:
+				item += ","+nbt[1:]
+			else:
+				item += "}"
 
-		return item
+			return item
 	
+	elif data == -1 and (item in itemvalues or item == "spawn_egg"):
+
+		if item == "spawn_egg":
+			all_items = ["minecraft:" + i + "_spawn_egg" for i in mobs]
+		else:
+			all_items = list(set(["minecraft:" + re.findall(r'^[a-z_]+', i)[0] for i in itemvalues[item].split()]))
+
+		if len(all_items) > 1:
+
+			if use_tags == False:
+				return "#"
+
+
+			if item == "wool":
+				return "#minecraft:wool" + nbt
+			
+			elif 'worldpath' in globals(): #This var is only created in run.py
+
+				filepath = os.path.join(worldpath, "datapacks", datapack, "data", datapack, "tags", "items", item+".json")
+
+				try:
+				    open(filepath, 'r')
+				except IOError:
+				    
+					with open(filepath, 'w+') as f:
+						f.write( json.dumps( {"values": all_items} , indent=4) )
+
+				return "#{}:{}".format(datapack, item) + nbt
+
+			else:
+				return "#{}:{}".format(datapack, item) + nbt
+		else:
+			return re.sub(r'^minecraft:', r'', all_items[0]) + nbt
+
+
 	elif item == "spawn_egg":
 
 		tmp = re.findall(r'entitytag:{id:(?:\")?(?:minecraft:)?([a-z_]+)', nbt.lower())
@@ -219,6 +306,46 @@ def change_item(item, data, nbt):
 
 
 	return item + nbt #Returns the item and nbt concatenated
+
+def change_objective(criteria):
+	
+	if criteria.startswith("stat."):
+		criteria = criteria.split(".")
+
+		if len(criteria) == 2:
+			return "minecraft.custom:minecraft.{}".format(objective_names[criteria[1]])
+		else:
+			*c_type, c = criteria
+			c_type = ".".join(c_type)
+
+			if c_type == "stat.craftItem.minecraft":
+				return "minecraft.crafted:minecraft.{}".format(change_item(c, "*", "", use_tags=False))
+
+			elif c_type == "stat.useItem.minecraft":
+				return "minecraft.used:minecraft.{}".format(change_item(c, "*", "", use_tags=False))
+
+			elif c_type == "stat.breakItem.minecraft":
+				return "minecraft.broken:minecraft.{}".format(change_item(c, "*", "", use_tags=False))
+
+			elif c_type == "stat.mineBlock.minecraft":
+				return "minecraft.mined:minecraft.{}".format(change_block(c, "*", "", use_tags=False))
+
+			elif c_type == "stat.killEntity":
+				return "minecraft.killed:minecraft.{}".format(entity_names[c])
+
+			elif c_type == "stat.pickup.minecraft":
+				return "minecraft.picked_up:minecraft.{}".format(change_item(c, "*", "", use_tags=False))
+
+			elif c_type == "stat.drop.minecraft":
+				return "minecraft.dropped:minecraft.{}".format(change_item(c, "*", "", use_tags=False))
+
+			elif c_type == "stat.entityKilledBy":
+				return "minecraft.killed_by:minecraft.{}".format(entity_names[c])
+
+	else:
+		return criteria
+
+
 
 
 #Don't ask me about this NBT part here. It's really confusing and I was half asleep when I made it
@@ -273,6 +400,7 @@ def get_item_nbt(nbt, nbt_type):
 					arg += nbt[i]
 				elif tmp1 == True:
 					val += nbt[i]
+
 		if len(arg) > 0 and len(val) > 0:
 			if arg in ("id", "Damage", "tag"):
 				item_nbt[arg] = val
@@ -288,7 +416,11 @@ def get_item_nbt(nbt, nbt_type):
 
 
 
-			item, start_nbt, end_nbt = change_item(item_nbt["id"], item_nbt["Damage"], item_nbt["tag"]), match_index+len(nbt_type)+1, end_index
+			item, start_nbt, end_nbt = change_item(item_nbt["id"], item_nbt["Damage"], item_nbt["tag"], use_tags=False), match_index+len(nbt_type)+1, end_index
+
+			if item.startswith("#"):
+				item = item_nbt["id"]
+				print("[Info] NBT in {} contains a block/item name that cannot be translated".format(filename))
 
 			output_nbt = nbt[:start_nbt]
 
@@ -421,15 +553,15 @@ def get_executes(command):
 
 	if command.startswith("execute"):
 		tmp = re.findall(r'^execute (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (.+)', command)
-		executelist += [re.findall(r'^execute (?:@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+',command)[0]]
 		if tmp:
+			executelist += [re.findall(r'^execute (?:@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+',command)[0]]
 			get_executes(tmp[0][2])
 
 	elif command.startswith("detect"):
 
 		tmp = re.findall(r'^detect ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([a-zA-Z_]+) ([\S]+) (.+)', command)
-		executelist += [re.findall(r'^detect [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ (?:minecraft\:)?[a-zA-Z_]+ [\S]+', command)[0]]
 		if tmp:
+			executelist += [re.findall(r'^detect [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ (?:minecraft\:)?[a-zA-Z_]+ [\S]+', command)[0]]
 			get_executes(tmp[0][3])
 
 
@@ -498,7 +630,7 @@ def get_executes(command):
 	else:
 		executelist += [command]
 
-def convert_command(gets, filename):
+def convert_command(gets):
 	command = gets
 	try:
 
@@ -536,6 +668,17 @@ def convert_command(gets, filename):
 			#Teams now
 			command = re.sub(r'^scoreboard teams', r'team', command)
 
+		elif command.startswith("scoreboard objectives"):
+			tmp = re.findall(r'^scoreboard objectives add (\S+) ([A-Za-z0-9\.\-_]+)', command)
+			if tmp:
+				criteria = change_objective(tmp[0][1])
+
+				if "#" not in criteria:
+					command = re.sub(r'^scoreboard objectives add (\S+) ([A-Za-z0-9\.\-_]+)', r'scoreboard objectives add \1 '+ criteria, command)
+				else:
+					print("[Info] Objective in {} contains a block/item name that cannot be translated".format(filename))
+
+
 		elif command.startswith("particle"):
 
 			#Particles
@@ -554,15 +697,15 @@ def convert_command(gets, filename):
 
 			tmp = re.findall(r'^give (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9]+)?(?: )?([0-9]+)?(?: )?({.*})?', command)
 			if tmp:
-				command = re.sub(r'^give (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9]+)?(?: )?([0-9]+)?(?: )?({.*})?', r'give \1 minecraft:pl@ceh0ld3r \3', command)
+				command = re.sub(r'^give (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9]+)?(?: )?([0-9]+)?(?: )?({.*})?', r'give \1 pl@ceh0ld3r \3', command)
 				command = re.sub(r'pl@ceh0ld3r', change_item(tmp[0][1], tmp[0][3], tmp[0][4]), command)
 
 		elif command.startswith("clear"):
 
 			tmp = re.findall(r'^clear (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9\-\*]+)?(?: )?([0-9\-\*]+)?(?: )?({.*})?', command)
 			if tmp:
-				command = re.sub(r'^clear (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9\-\*]+)?(?: )?([0-9\-\*]+)?(?: )?({.*})?', r'clear \1 minecraft:pl@ceh0ld3r pl@ceh0ld2r', command)
-				command = re.sub(r'pl@ceh0ld3r', change_item(tmp[0][1], tmp[0][2], tmp[0][4]), command)
+				command = re.sub(r'^clear (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9\-\*]+)?(?: )?([0-9\-\*]+)?(?: )?({.*})?', r'clear \1 pl@ceh0ld3r pl@ceh0ld2r', command)
+				command = re.sub(r'pl@ceh0ld3r', change_item(tmp[0][1], tmp[0][2] if tmp[0][2] else "*", tmp[0][4]), command)
 				command = re.sub(r'pl@ceh0ld2r', tmp[0][3] if tmp[0][3].isdigit() else "", command)
 
 
@@ -570,12 +713,12 @@ def convert_command(gets, filename):
 
 			tmp = re.findall(r'^replaceitem entity (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) slot\.([a-z0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9]+)?(?: )?([0-9]+)?(?: )?({.*})?', command)
 			if tmp:
-				command = re.sub(r'^replaceitem entity (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) slot\.([a-z0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9]+)?(?: )?([0-9]+)?(?: )?({.*})?', r'replaceitem entity \1 \2 minecraft:pl@ceh0ld3r \4', command)
+				command = re.sub(r'^replaceitem entity (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) slot\.([a-z0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9]+)?(?: )?([0-9]+)?(?: )?({.*})?', r'replaceitem entity \1 \2 pl@ceh0ld3r \4', command)
 				command = re.sub(r'pl@ceh0ld3r', change_item(tmp[0][2], tmp[0][4], tmp[0][5]), command)
 			else:
 				tmp = re.findall(r'^replaceitem block ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) slot\.([a-z0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9]+)?(?: )?([0-9]+)?(?: )?({.*})?', command)
 				if tmp:
-					command = re.sub(r'^replaceitem block ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) slot\.([a-z0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9]+)?(?: )?([0-9]+)?(?: )?({.*})?', r'replaceitem block \1 \2 minecraft:pl@ceh0ld3r \4', command)
+					command = re.sub(r'^replaceitem block ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) slot\.([a-z0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9]+)?(?: )?([0-9]+)?(?: )?({.*})?', r'replaceitem block \1 \2 pl@ceh0ld3r \4', command)
 					command = re.sub(r'pl@ceh0ld3r', change_item(tmp[0][2], tmp[0][4], tmp[0][5]), command)
 
 
@@ -607,13 +750,13 @@ def convert_command(gets, filename):
 		#Block states instead of data values. It will just copy states over if they were already used
 		elif command.startswith("setblock"):
 			tmp = re.findall(r'^setblock ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([\S]+)?(?: )?(destroy|keep|replace)?(?: )?({.+})?', command)
-			command = re.sub(r'^setblock ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([\S]+)?(?: )?(destroy|keep|replace)?(?: )?({.+})?', r'setblock \1 minecraft:pl@ceh0ld3r \4', command)
+			command = re.sub(r'^setblock ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([\S]+)?(?: )?(destroy|keep|replace)?(?: )?({.+})?', r'setblock \1 pl@ceh0ld3r \4', command)
 			if tmp:
 				command = re.sub(r'pl@ceh0ld3r', change_block(tmp[0][1], tmp[0][2] if tmp[0][2] else "default", tmp[0][4]), command)
 
 		elif command.startswith("testforblock "):
 			tmp = re.findall(r'^testforblock ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([\S]+)?(?: )?({.*})?', command)
-			command = re.sub(r'^testforblock ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([\S]+)?(?: )?({.*})?', r'if block \1 minecraft:pl@ceh0ld3r', command)
+			command = re.sub(r'^testforblock ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([\S]+)?(?: )?({.*})?', r'if block \1 pl@ceh0ld3r', command)
 			if tmp:
 				data = tmp[0][2]
 				if data == "":
@@ -625,19 +768,19 @@ def convert_command(gets, filename):
 		elif command.startswith("fill"):
 			#Fill replace
 			tmp = re.findall(r'^fill ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([A-Za-z_]+) ([\S]+) replace (?:minecraft\:)?([A-Za-z_]+)(?: )?([\S]+)?', command)
-			command = re.sub(r'^fill ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([A-Za-z_]+) ([\S]+) replace (?:minecraft\:)?([A-Za-z_]+)(?: )?([\S]+)?', r'fill \1 minecraft:pl@ceh0ld3r replace minecraft:pl@ceh0ld2r', command)
+			command = re.sub(r'^fill ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([A-Za-z_]+) ([\S]+) replace (?:minecraft\:)?([A-Za-z_]+)(?: )?([\S]+)?', r'fill \1 pl@ceh0ld3r replace pl@ceh0ld2r', command)
 			if tmp:
 				command = re.sub(r'pl@ceh0ld3r', change_block(tmp[0][1], tmp[0][2] if tmp[0][2] else "default", ""), command)
 				command = re.sub(r'pl@ceh0ld2r', change_block(tmp[0][3], tmp[0][4] if tmp[0][4] else "default", ""), command)
 			else:
 				#Fill normal
 				tmp = re.findall(r'^fill ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([A-Za-z_]+) ([\S]+)(?: )?(destroy|hollow|keep|outline|replace)?(?: )?({.+})?', command)
-				command = re.sub(r'^fill ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([A-Za-z_]+) ([\S]+)(?: )?(destroy|hollow|keep|outline|replace)?(?: )?({.+})?', r'fill \1 minecraft:pl@ceh0ld3r \4', command)
+				command = re.sub(r'^fill ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([A-Za-z_]+) ([\S]+)(?: )?(destroy|hollow|keep|outline|replace)?(?: )?({.+})?', r'fill \1 pl@ceh0ld3r \4', command)
 				if tmp:
 					command = re.sub(r'pl@ceh0ld3r', change_block(tmp[0][1], tmp[0][2], tmp[0][4]), command)
 				else:
 					tmp = re.findall(r'^fill ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)', command)
-					command = re.sub(r'^fill ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)', r'fill \1 minecraft:pl@ceh0ld3r', command)
+					command = re.sub(r'^fill ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)', r'fill \1 pl@ceh0ld3r', command)
 					if tmp:
 						command = re.sub(r'pl@ceh0ld3r', change_block(tmp[0][1], "default", ""), command)
 
@@ -646,7 +789,7 @@ def convert_command(gets, filename):
 		elif command.startswith("clone"):
 			#Filtered clone
 			tmp = re.findall(r'^clone ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (filtered|replace|masked) (force|move|normal) (?:minecraft\:)?([A-Za-z_]+)(?: )?([\S]+)?', command)
-			command = re.sub(r'^clone ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (filtered|replace|masked) (force|move|normal) (?:minecraft\:)?([A-Za-z_]+)(?: )?([\S]+)?', r'clone \1 filtered \3 minecraft:pl@ceh0ld3r', command)
+			command = re.sub(r'^clone ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (filtered|replace|masked) (force|move|normal) (?:minecraft\:)?([A-Za-z_]+)(?: )?([\S]+)?', r'clone \1 filtered \3 pl@ceh0ld3r', command)
 			if tmp:
 				command = re.sub(r'pl@ceh0ld3r', change_block(tmp[0][3], tmp[0][4], ""), command)
 
@@ -761,7 +904,7 @@ def convert_command(gets, filename):
 
 	return command
 
-def convert(command, filename):
+def convert(command):
 	global executelist
 	global tp_new_pos
 	global precommand
@@ -869,7 +1012,7 @@ def convert(command, filename):
 			elif executelist[i].startswith("detect"):
 
 				tmp = re.findall(r'^detect ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([A-Za-z_]+) ([\S]+)', executelist[i])
-				executelist[i] = re.sub(r'^detect ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([A-Za-z_]+) ([\S]+)', r'if block \1 minecraft:pl@ceh0ld3r', executelist[i])
+				executelist[i] = re.sub(r'^detect ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([A-Za-z_]+) ([\S]+)', r'if block \1 pl@ceh0ld3r', executelist[i])
 				if tmp:
 					executelist[i] = re.sub(r'pl@ceh0ld3r', change_block(tmp[0][1], tmp[0][2], ""), executelist[i])
 
@@ -878,7 +1021,7 @@ def convert(command, filename):
 		if tp_self == True and re.findall(r'^tp @s', executelist[-1]):
 			tp_new_pos = True
 
-		executelist[-1] = convert_command(executelist[-1], filename)
+		executelist[-1] = convert_command(executelist[-1])
 
 		tmp = re.findall(r'^function (\S+) (if|unless) (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+)', executelist[-1])
 		if tmp:
@@ -1103,4 +1246,5 @@ while not re.findall(r'^[a-z0-9_\-]+$', datapack):
 tp_new_pos = False
 const_used = False
 while True:
-	print(convert(input("> ").rstrip(), "console"), end="")
+	filename = "console"
+	print(convert(input("> ").rstrip()), end="")
