@@ -546,7 +546,6 @@ def new_nbt(nbt):
 def get_executes(command):
 	global executelist
 	global precommand
-	global const_used
 
 	if command.startswith("/"):
 		command = command[1:]
@@ -611,21 +610,16 @@ def get_executes(command):
 			if tmp:
 
 				if tmp[0][2] == tmp[0][3] and tmp[0][2] != "*" and len(tmp[0][2]) > 0:
-					precommand += "scoreboard players set #test_score const {}\n".format(tmp[0][2])
-					executelist += ["if score {0} {1} = #test_score const".format(tmp[0][0], tmp[0][1])]
+					executelist += ["if score {0} {1} matches {2}".format(tmp[0][0], tmp[0][1], tmp[0][2])]
 
-				else:
-					if tmp[0][2] != "*" and len(tmp[0][2]) > 0:
-						precommand += "scoreboard players set #test_min const {}\n".format(tmp[0][2])
-						executelist += ["if score {0} {1} >= #test_min const".format(tmp[0][0], tmp[0][1])]
+				elif tmp[0][2] != "*" and len(tmp[0][2]) > 0 and (len(tmp[0][3]) == 0 or tmp[0][3] == "*"):
+					executelist += ["if score {0} {1} matches {2}..".format(tmp[0][0], tmp[0][1], tmp[0][2])]
 
-					if tmp[0][3] != "*" and len(tmp[0][3]) > 0:
-						precommand += "scoreboard players set #test_max const {}\n".format(tmp[0][3])
-						executelist += ["if score {0} {1} <= #test_max const".format(tmp[0][0], tmp[0][1])]
+				elif tmp[0][3] != "*" and len(tmp[0][3]) > 0 and (len(tmp[0][2]) == 0 or tmp[0][2] == "*"):
+					executelist += ["if score {0} {1} matches ..{2}".format(tmp[0][0], tmp[0][1], tmp[0][3])]
 
-
-				const_used = True
-
+				elif tmp[0][2] != "*" and len(tmp[0][2]) > 0 and tmp[0][3] != "*" and len(tmp[0][3]) > 0:
+					executelist += ["if score {0} {1} matches {2}..{3}".format(tmp[0][0], tmp[0][1], tmp[0][2],tmp[0][3])]
 
 	else:
 		executelist += [command]
@@ -957,7 +951,6 @@ def convert(command):
 
 				elif executelist[i + 1].startswith("detect"):
 					next_execute = re.findall(r'^detect ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([a-zA-Z_]+) ([\S]+)',executelist[i + 1])[0]
-					useas = False
 					useat = True
 
 
@@ -1244,7 +1237,6 @@ while not re.findall(r'^[a-z0-9_\-]+$', datapack):
 	datapack = input("Datapack namespace [a-z0-9_-]: ")
 
 tp_new_pos = False
-const_used = False
 while True:
 	filename = "console"
 	print(convert(input("> ").rstrip()), end="")
