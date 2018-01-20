@@ -555,7 +555,6 @@ def new_nbt(nbt):
 def get_executes(command):
 	global executelist
 	global precommand
-	global const_used
 
 	if command.startswith("/"):
 		command = command[1:]
@@ -620,21 +619,16 @@ def get_executes(command):
 			if tmp:
 
 				if tmp[0][2] == tmp[0][3] and tmp[0][2] != "*" and len(tmp[0][2]) > 0:
-					precommand += "scoreboard players set #test_score const {}\n".format(tmp[0][2])
-					executelist += ["if score {0} {1} = #test_score const".format(tmp[0][0], tmp[0][1])]
+					executelist += ["if score {0} {1} matches {2}".format(tmp[0][0], tmp[0][1], tmp[0][2])]
 
-				else:
-					if tmp[0][2] != "*" and len(tmp[0][2]) > 0:
-						precommand += "scoreboard players set #test_min const {}\n".format(tmp[0][2])
-						executelist += ["if score {0} {1} >= #test_min const".format(tmp[0][0], tmp[0][1])]
+				elif tmp[0][2] != "*" and len(tmp[0][2]) > 0 and (len(tmp[0][3]) == 0 or tmp[0][3] == "*"):
+					executelist += ["if score {0} {1} matches {2}..".format(tmp[0][0], tmp[0][1], tmp[0][2])]
 
-					if tmp[0][3] != "*" and len(tmp[0][3]) > 0:
-						precommand += "scoreboard players set #test_max const {}\n".format(tmp[0][3])
-						executelist += ["if score {0} {1} <= #test_max const".format(tmp[0][0], tmp[0][1])]
+				elif tmp[0][3] != "*" and len(tmp[0][3]) > 0 and (len(tmp[0][2]) == 0 or tmp[0][2] == "*"):
+					executelist += ["if score {0} {1} matches ..{2}".format(tmp[0][0], tmp[0][1], tmp[0][3])]
 
-
-				const_used = True
-
+				elif tmp[0][2] != "*" and len(tmp[0][2]) > 0 and tmp[0][3] != "*" and len(tmp[0][3]) > 0:
+					executelist += ["if score {0} {1} matches {2}..{3}".format(tmp[0][0], tmp[0][1], tmp[0][2],tmp[0][3])]
 
 	else:
 		executelist += [command]
@@ -966,7 +960,6 @@ def convert(command):
 
 				elif executelist[i + 1].startswith("detect"):
 					next_execute = re.findall(r'^detect ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([a-zA-Z_]+) ([\S]+)',executelist[i + 1])[0]
-					useas = False
 					useat = True
 
 
@@ -1383,7 +1376,6 @@ datapack = input("Datapack namespace [a-z0-9_-]: ").rstrip()
 while not re.findall(r'^[a-z0-9_\-]+$', datapack):
 	datapack = input("Datapack namespace [a-z0-9_-]: ")
 
-const_used = False
 
 
 
@@ -1457,7 +1449,7 @@ try:
 
 	tmp = re.findall(r'^([A-Za-z0-9_\-]+):([A-Za-z0-9_\-/]+)$', str(nbtfile['Data']['GameRules']['gameLoopFunction']))
 	if tmp:
-		tmp1 = re.sub(r'^([A-Za-z0-9_\-]+):([A-Za-z0-9_\-/]+)$', r'function {}:{}/{}'.format(datapack, tmp[0][0].lower(), tmp[0][1].lower()), str(nbtfile['Data']['GameRules']['gameLoopFunction']))
+		tmp1 = re.sub(r'^([A-Za-z0-9_\-]+):([A-Za-z0-9_\-/]+)$', r'{}:{}/{}'.format(datapack, tmp[0][0].lower(), tmp[0][1].lower()), str(nbtfile['Data']['GameRules']['gameLoopFunction']))
 
 		with open(os.path.join(worldpath, "datapacks", datapack, "data", datapack, "tags", "functions", "tick.json"), 'w+') as f:
 			f.write( json.dumps( {"values": [tmp1]} , indent=4) )
@@ -1528,14 +1520,9 @@ for path, dirs, files in os.walk( os.path.join(worldpath, "datapacks", datapack,
 print("Converting scoreboard")
 
 try:
-	tmp = False
 	nbtfile = NBTFile(os.path.join(worldpath, "data", "scoreboard.dat"), "rb")
 
 	for i in range(len(nbtfile['data']['Objectives'])):
-
-		if const_used == True:
-			if nbtfile['data']['Objectives'][i]['Name'] == "const":
-				tmp = True
 
 		criteria = change_objective(str(nbtfile['data']['Objectives'][i]['CriteriaName']))
 
@@ -1543,16 +1530,7 @@ try:
 			nbtfile['data']['Objectives'][i]['CriteriaName'] = TAG_String(criteria)
 		else:
 			print("[Info] Objective \"{}\" contains a block/item name that cannot be translated".format(nbtfile['data']['Objectives'][i]['Name']))
-
-
-	if tmp == False and const_used == True: # Add the const score which is used for fake players
-		nbtdict = TAG_Compound()
-		nbtdict.tags.append(TAG_String(name='CriteriaName', value='dummy'))
-		nbtdict.tags.append(TAG_String(name='DisplayName', value='const'))
-		nbtdict.tags.append(TAG_String(name='RenderType', value='integer'))
-		nbtdict.tags.append(TAG_String(name='Name', value='const'))
-
-		nbtfile['data']['Objectives'].append(nbtdict)
+		
 
 	nbtfile.write_file(os.path.join(worldpath, "data", "scoreboard.dat"))
 except Exception as inst:
