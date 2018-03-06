@@ -2,7 +2,7 @@
 
 The program is supposed to update everything map-making related in your world automatically. This includes functions, loot tables, advancements, and all their file locations
 
-It was made for Python 3, which you can get from https://www.python.org/
+It was made for Python 3.5+, which you can download from https://www.python.org/
 
 It will try to optimize your execute commands as much as possible but there might be cases where you can optimize it even more with the range of new possibilities in 1.13. (E.g. moving a scoreboard nbt command into the execute selector)
 
