@@ -1,13 +1,11 @@
-import os
-import json
-import errno
-import re
+import os, json, errno, re
 
 #Set values
 effect_id = ('speed', 'slowness', 'haste', 'mining_fatigue', 'strength', 'instant_health', 'instant_damage', 'jump_boost', 'nausea', 'regeneration', 'resistance', 'fire_resistance', 'water_breathing', 'invisibility', 'blindness', 'night_vision', 'hunger', 'weakness', 'poison', 'wither', 'health_boost', 'absorption', 'saturation', 'glowing', 'levitation', 'luck', 'unluck')
 particles = {'angryVillager': 'angry_villager', 'blockcrack': 'block', 'blockdust': 'dust', 'damageIndicator': 'damage_indicator', 'dragonbreath': 'dragon_breath', 'dripLava': 'drip_lava', 'dripWater': 'drip_water', 'droplet': 'rain', 'enchantmenttable': 'enchant', 'endRod': 'end_rod', 'explode': 'poof', 'fallingdust': 'falling_dust', 'fireworksSpark': 'firework', 'happyVillager': 'happy_villager', 'hugeexplosion': 'explosion_emitter', 'iconcrack': 'item', 'instantSpell': 'instant_effect', 'largeexplode': 'explosion', 'largesmoke': 'large_smoke', 'magicCrit': 'enchanted_hit', 'mobSpell': 'entity_effect', 'mobSpellAmbient': 'ambient_entity_effect', 'mobappearance': 'elder_guardian', 'reddust': 'dust 255 0 0 1', 'slime': 'item_slime', 'snowballpoof': 'item_snowball', 'spell': 'effect', 'suspended': 'underwater', 'sweepAttack': 'sweep_attack', 'totem': 'totem_of_undying', 'townaura': 'mycelium', 'wake': 'fishing', 'witchMagic': 'witch'}
 objective_names = {'drop': 'drop', 'swimOneCm': 'swim_one_cm', 'walkOneCm': 'walk_one_cm', 'recordPlayed': 'play_record', 'noteblockPlayed': 'play_noteblock', 'deaths': 'deaths', 'leaveGame': 'leave_game', 'damageDealt': 'damage_dealt', 'fishCaught': 'fish_caught', 'trappedChestTriggered': 'trigger_trapped_chest', 'tradedWithVillager': 'traded_with_villager', 'playerKills': 'player_kills', 'damageTaken': 'damage_taken', 'sneakTime': 'sneak_time', 'flowerPotted': 'pot_flower', 'playOneMinute': 'play_one_minute', 'enderchestOpened': 'open_enderchest', 'armorCleaned': 'clean_armor', 'aviateOneCm': 'aviate_one_cm', 'beaconInteraction': 'interact_with_beacon', 'pigOneCm': 'pig_one_cm', 'craftingTableInteraction': 'interact_with_crafting_table', 'sleepInBed': 'sleep_in_bed', 'talkedToVillager': 'talked_to_villager', 'brewingstandInteraction': 'interact_with_brewingstand', 'cakeSlicesEaten': 'eat_cake_slice', 'flyOneCm': 'fly_one_cm', 'chestOpened': 'open_chest', 'furnaceInteraction': 'interact_with_furnace', 'hopperInspected': 'inspect_hopper', 'horseOneCm': 'horse_one_cm', 'animalsBred': 'animals_bred', 'shulkerBoxOpened': 'open_shulker_box', 'jump': 'jump', 'dropperInspected': 'inspect_dropper', 'climbOneCm': 'climb_one_cm', 'timeSinceDeath': 'time_since_death', 'bannerCleared': 'clean_banner', 'mobKills': 'mob_kills', 'cauldronFilled': 'fill_cauldron', 'itemEnchanted': 'enchant_item', 'crouchOneCm': 'crouch_one_cm', 'sprintOneCm': 'sprint_one_cm', 'fallOneCm': 'fall_one_cm', 'cauldronUsed': 'use_cauldron', 'noteblockTuned': 'tune_noteblock', 'minecartOneCm': 'minecart_one_cm', 'boatOneCm': 'boat_one_cm', 'diveOneCm': 'dive_one_cm'}
 entity_names = {'Item': 'item', 'XPOrb': 'xp_orb', 'LeashKnot': 'leash_knot', 'Enderman': 'enderman', 'Endermite': 'endermite', 'Horse': 'horse', 'LavaSlime': 'magma_cube', 'WitherSkeleton': 'wither_skeleton', 'EyeOfEnderSignal': 'eye_of_ender_signal', 'FallingSand': 'falling_block', 'MinecartRideable': 'minecart', 'Spider': 'spider', 'MinecartSpawner': 'spawner_minecart', 'MushroomCow': 'mooshroom', 'Guardian': 'guardian', 'Skeleton': 'skeleton', 'ThrownExpBottle': 'xp_bottle', 'EnderDragon': 'ender_dragon', 'Witch': 'witch', 'Arrow': 'arrow', 'Snowball': 'snowball', 'EnderCrystal': 'ender_crystal', 'Zombie': 'zombie', 'Giant': 'giant', 'ArmorStand': 'armor_stand', 'ThrownEnderpearl': 'ender_pearl', 'CaveSpider': 'cave_spider', 'Silverfish': 'silverfish', 'WitherBoss': 'wither', 'Bat': 'bat', 'ElderGuardian': 'elder_guardian', 'Donkey': 'donkey', 'ItemFrame': 'item_frame', 'Cow': 'cow', 'SmallFireball': 'small_fireball', 'ThrownEgg': 'egg', 'Shulker': 'shulker', 'MinecartFurnace': 'furnace_minecart', 'WitherSkull': 'wither_skull', 'Creeper': 'creeper', 'Villager': 'villager', 'ZombieHorse': 'zombie_horse', 'Fireball': 'fireball', 'SpectralArrow': 'spectral_arrow', 'MinecartHopper': 'hopper_minecart', 'Painting': 'painting', 'Blaze': 'blaze', 'Chicken': 'chicken', 'DragonFireball': 'dragon_fireball', 'Squid': 'squid', 'PrimedTnt': 'tnt', 'SnowMan': 'snowman', 'ThrownPotion': 'potion', 'ZombieVillager': 'zombie_villager', 'Slime': 'slime', 'Mule': 'mule', 'MinecartChest': 'chest_minecart', 'VillagerGolem': 'villager_golem', 'PolarBear': 'polar_bear', 'PigZombie': 'zombie_pigman', 'SkeletonHorse': 'skeleton_horse', 'Ghast': 'ghast', 'Husk': 'husk', 'MinecartTNT': 'tnt_minecart', 'Boat': 'boat', 'Rabbit': 'rabbit', 'FireworksRocketEntity': 'fireworks_rocket', 'AreaEffectCloud': 'area_effect_cloud', 'MinecartCommandBlock': 'commandblock_minecart', 'Ozelot': 'ocelot', 'Stray': 'stray', 'Wolf': 'wolf', 'ShulkerBullet': 'shulker_bullet', 'Pig': 'pig', 'Sheep': 'sheep'}
+enchanting = {0: 'minecraft:protection', 1: 'minecraft:fire_protection', 2: 'minecraft:feather_falling', 3: 'minecraft:blast_protection', 4: 'minecraft:projectile_protection', 5: 'minecraft:respiration', 6: 'minecraft:aqua_affinity', 7: 'minecraft:thorns', 8: 'minecraft:depth_strider', 9: 'minecraft:frost_walker', 10: 'minecraft:binding_curse', 66: 'minecraft:impaling', 16: 'minecraft:sharpness', 17: 'minecraft:smite', 18: 'minecraft:bane_of_arthropods', 19: 'minecraft:knockback', 20: 'minecraft:fire_aspect', 21: 'minecraft:looting', 22: 'minecraft:sweeping', 68: 'minecraft:channeling', 71: 'minecraft:vanishing_curse', 32: 'minecraft:efficiency', 33: 'minecraft:silk_touch', 34: 'minecraft:unbreaking', 35: 'minecraft:fortune', 70: 'minecraft:mending', 65: 'minecraft:loyalty', 67: 'minecraft:riptide', 48: 'minecraft:power', 49: 'minecraft:punch', 50: 'minecraft:flame', 51: 'minecraft:infinity', 61: 'minecraft:luck_of_the_sea', 62: 'minecraft:lure'}
 
 blockstates = dict(line.rstrip().split(":", 1) for line in open(os.path.join(".", "blockstates.txt"), 'r'))
 blockstates_other = dict(line.rstrip().split(" ", 1) for line in open(os.path.join(".", "blockstates_other.txt"), 'r'))
@@ -348,8 +346,11 @@ def change_objective(criteria):
 
 
 
-#Don't ask me about this NBT part here. It's really confusing and I was half asleep when I made it
 def get_item_nbt(nbt, nbt_type):
+
+	'''
+	Gets the values of an item inputted in NBT, so it can convert it.
+	'''
 
 	match_count = len([i for i in range(1, len(nbt)-len(nbt_type)) if re.findall(r'(?:\{|\,|\[|^)' + nbt_type + r'{$', nbt[i-1:i+len(nbt_type)+1])])
 
@@ -451,6 +452,10 @@ def get_item_nbt(nbt, nbt_type):
 
 def get_nbt_list(nbt, nbt_type):
 
+	'''
+	Finds a list in NBT in which to update 
+	'''
+
 	match_count = len([i for i in range(1, len(nbt)-len(nbt_type)) if re.findall(r'(?:\{|\,|\[|^)' + nbt_type + r'$', nbt[i-1:i+len(nbt_type)])])
 
 	for match_number in range(match_count):
@@ -498,7 +503,7 @@ def get_nbt_list(nbt, nbt_type):
 
 			for i in range(len(nbt_list)):
 
-				block = re.findall(r'(?:minecraft:)?([a-z_]+)',nbt_list[i])[0]
+				block = re.findall(r'(?:minecraft:)?([a-z_]+)|$',nbt_list[i])[0]
 				
 				if block in blockstates:
 					states = ["minecraft:"+i for i in set(re.findall(r'(?:^| )([a-z_]+)', blockstates[block]))] #Gets list of unique block names
@@ -515,6 +520,18 @@ def get_nbt_list(nbt, nbt_type):
 						states = ['minecraft:flower_pot', 'minecraft:potted_poppy', 'minecraft:potted_dandelion', 'minecraft:potted_oak_sapling', 'minecraft:potted_spruce_sapling', 'minecraft:potted_birch_sapling', 'minecraft:potted_jungle_sapling', 'minecraft:potted_red_mushroom', 'minecraft:potted_brown_mushroom', 'minecraft:potted_cactus', 'minecraft:potted_dead_bush', 'minecraft:potted_fern', 'minecraft:potted_acacia_sapling', 'minecraft:potted_dark_oak_sapling', 'minecraft:potted_blue_orchid', 'minecraft:potted_allium', 'minecraft:potted_azure_bluet', 'minecraft:potted_red_tulip', 'minecraft:potted_orange_tulip', 'minecraft:potted_white_tulip', 'minecraft:potted_pink_tulip', 'minecraft:potted_oxeye_daisy']
 
 					nbt_list[i] = "\"" + "\",\"".join(states) + "\""
+
+		elif nbt_type == "ench:":
+
+			for i in range(len(nbt_list)):
+
+				enchid = re.findall(r'id:([0-9]+)|$',nbt_list[i])[0]
+				enchlvl = re.findall(r'lvl:([0-9]+)|$',nbt_list[i])[0]
+
+				if enchid != '' and enchlvl != '':
+					nbt_list[i] = "{id:\""+ enchanting[int(enchid)] + "\",lvl:"+enchlvl+"}"
+
+
 
 
 		start_nbt, end_nbt = match_index+len(nbt_type)+1, end_index
@@ -538,6 +555,10 @@ def new_nbt(nbt):
 
 	for i in ["CanPlaceOn:","CanDestroy:"]:
 		nbt = get_nbt_list(nbt, i)
+
+	nbt = get_nbt_list(nbt, "ench:")
+
+
 	return nbt
 
 
