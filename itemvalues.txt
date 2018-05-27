@@ -66,3 +66,5 @@ wooden_trapdoor:oak_trapdoor
 reeds:sugar_cane
 pumpkin:carved_pumpkin
 lit_pumpkin:jack_o_lantern
+melon_block:melon
+melon:carved_melon
