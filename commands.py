@@ -558,6 +558,7 @@ def new_nbt(nbt):
 
 	nbt = get_nbt_list(nbt, "ench:")
 
+	nbt = nbt.replace("ench:[","Enchantments:[")
 
 	return nbt
 
