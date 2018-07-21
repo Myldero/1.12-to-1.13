@@ -68,4 +68,3 @@ pumpkin:carved_pumpkin
 lit_pumpkin:jack_o_lantern
 melon:melon_slice
 melon_block:melon
-
