@@ -7,10 +7,8 @@ except ImportError:
 	exit()
 from time import time
 import shutil
-import os
-import json
-import errno
-import re
+import os, json, errno, re
+
 
 #Set values
 effect_id = ('speed', 'slowness', 'haste', 'mining_fatigue', 'strength', 'instant_health', 'instant_damage', 'jump_boost', 'nausea', 'regeneration', 'resistance', 'fire_resistance', 'water_breathing', 'invisibility', 'blindness', 'night_vision', 'hunger', 'weakness', 'poison', 'wither', 'health_boost', 'absorption', 'saturation', 'glowing', 'levitation', 'luck', 'unluck')
@@ -76,17 +74,17 @@ def change_block(block, data="", nbt="", use_tags=True):
 
 	#Block State
 	if data in ['-1','*'] and (block in blockstates or block == "flower_pot"):
-		
+
 		if block == "skull":
 			all_blocks = ["minecraft:" + i for i in skulls + wall_skulls]
-		
+
 		elif block == "banner":
 			all_blocks = ["minecraft:" + i + "_banner" for i in colors]
 			all_blocks = ["minecraft:" + i + "_wall_banner" for i in colors]
-		
+
 		elif block == "bed":
 			all_blocks = ["minecraft:" + i + "_bed" for i in colors]
-		
+
 		elif block == "flower_pot":
 			all_blocks = ["minecraft:potted_" + flowers[i] for i in flowers]
 
@@ -101,15 +99,15 @@ def change_block(block, data="", nbt="", use_tags=True):
 
 			if block == "wool":
 				block = "#minecraft:wool"
-			
+
 			elif 'worldpath' in globals(): #This var is only created in run.py
 
 				filepath = os.path.join(worldpath, "datapacks", datapack, "data", datapack, "tags", "blocks", block+".json")
 
 				try:
-				    open(filepath, 'r')
+					open(filepath, 'r')
 				except IOError:
-				    
+
 					with open(filepath, 'w+') as f:
 						f.write( json.dumps( {"values": all_blocks} , indent=4) )
 
@@ -121,9 +119,9 @@ def change_block(block, data="", nbt="", use_tags=True):
 			block = re.sub(r'^minecraft:', r'', all_blocks[0])
 
 
-		
+
 	elif isinstance(data, int):
-		
+
 		if block in blockstates:
 			states = blockstates[block].split() #Gets list of block states
 
@@ -134,7 +132,7 @@ def change_block(block, data="", nbt="", use_tags=True):
 
 		#Special cases (love those)
 		if block.startswith("skull"):
-			
+
 			rotation = 0
 			skull_type = 0
 
@@ -168,7 +166,7 @@ def change_block(block, data="", nbt="", use_tags=True):
 
 
 		elif block.startswith("wall_skull"):
-			
+
 			skull_type = 0
 
 			tmp = re.findall(r'SkullType:([0-9])', nbt)
@@ -184,7 +182,7 @@ def change_block(block, data="", nbt="", use_tags=True):
 			nbt = ""
 
 		elif block.startswith("wall_banner") or block.startswith("banner"):
-			
+
 			color = 0
 
 			tmp = re.findall(r'Base:([0-9]+)', nbt)
@@ -199,7 +197,7 @@ def change_block(block, data="", nbt="", use_tags=True):
 			block = colors[color] + "_" + block
 
 		elif block.startswith("bed"):
-			
+
 			color = 0
 			tmp = re.findall(r'color:([0-9]+)', nbt, flags=re.IGNORECASE)
 			if tmp:
@@ -266,7 +264,7 @@ def change_item(item, data, nbt, use_tags=True):
 				item += "}"
 
 			return item
-	
+
 	elif data == -1 and (item in itemvalues or item == "spawn_egg"):
 
 		if item == "spawn_egg":
@@ -282,15 +280,15 @@ def change_item(item, data, nbt, use_tags=True):
 
 			if item == "wool":
 				return "#minecraft:wool" + nbt
-			
+
 			elif 'worldpath' in globals(): #This var is only created in run.py
 
 				filepath = os.path.join(worldpath, "datapacks", datapack, "data", datapack, "tags", "items", item+".json")
 
 				try:
-				    open(filepath, 'r')
+					open(filepath, 'r')
 				except IOError:
-				    
+
 					with open(filepath, 'w+') as f:
 						f.write( json.dumps( {"values": all_items} , indent=4) )
 
@@ -318,7 +316,7 @@ def change_item(item, data, nbt, use_tags=True):
 	return item + nbt #Returns the item and nbt concatenated
 
 def change_objective(criteria):
-	
+
 	if criteria.startswith("stat."):
 		criteria = criteria.split(".")
 
@@ -465,7 +463,7 @@ def get_item_nbt(nbt, nbt_type):
 def get_nbt_list(nbt, nbt_type):
 
 	'''
-	Finds a list in NBT in which to update 
+	Finds a list in NBT in which to update
 	'''
 
 	match_count = len([i for i in range(1, len(nbt)-len(nbt_type)) if re.findall(r'(?:\{|\,|\[|^)' + nbt_type + r'$', nbt[i-1:i+len(nbt_type)])])
@@ -516,7 +514,7 @@ def get_nbt_list(nbt, nbt_type):
 			for i in range(len(nbt_list)):
 
 				block = re.findall(r'(?:minecraft:)?([a-z_]+)|$',nbt_list[i])[0]
-				
+
 				if block in blockstates:
 					states = ["minecraft:"+i for i in set(re.findall(r'(?:^| )([a-z_]+)', blockstates[block]))] #Gets list of unique block names
 
@@ -569,7 +567,7 @@ def new_nbt(nbt):
 		nbt = get_nbt_list(nbt, i)
 
 	nbt = get_nbt_list(nbt, "ench:")
-	
+
 	nbt = nbt.replace("ench:[","Enchantments:[")
 
 	return nbt
@@ -585,9 +583,9 @@ def get_executes(command):
 		command = command[1:]
 
 	if command.startswith("execute"):
-		tmp = re.findall(r'^execute (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (.+)', command)
+		tmp = re.findall(r'^execute (@[a-z][A-Za-z0-9=\.,_\-\!\{\}\(\)\[\]]*|[a-zA-Z0-9_\-\#]+) ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (.+)', command)
 		if tmp:
-			executelist += [re.findall(r'^execute (?:@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+',command)[0]]
+			executelist += [re.findall(r'^execute (?:@[a-z][A-Za-z0-9=\.,_\-\!\{\}\(\)\[\]]*|[a-zA-Z0-9_\-\#]+) [~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+',command)[0]]
 			get_executes(tmp[0][2])
 
 	elif command.startswith("detect"):
@@ -600,13 +598,13 @@ def get_executes(command):
 
 		#The following commands need execute so they need to be converted here already
 	elif re.findall(r'^tp(.*)~', command):
-		tmp = re.findall(r'tp (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+)', command)[0]
+		tmp = re.findall(r'tp (@[a-z][A-Za-z0-9=\.,_\-\!\{\}\(\)\[\]]*|[a-zA-Z0-9_\-\#]+) ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+)', command)[0]
 		if tmp[0] != "@s":
 			executelist += ["execute {0} ~ ~ ~".format(tmp[0])]
 		executelist += ["tp @s {0}".format(tmp[1])]
 
 	elif command.startswith("entitydata"):
-		tmp = re.findall(r'entitydata (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+)(.*)', command)[0]
+		tmp = re.findall(r'entitydata (@[a-z][A-Za-z0-9=\.,_\-\!\{\}\(\)\[\]]*|[a-zA-Z0-9_\-\#]+)(.*)', command)[0]
 		if not tmp[0].startswith("@s") and not tmp[0].startswith("@p") and not 'c=1' in tmp[0]:
 			executelist += ["execute {0} ~ ~ ~".format(tmp[0])]
 			executelist += ["entitydata @s{0}".format(tmp[1])]
@@ -615,9 +613,9 @@ def get_executes(command):
 	elif command.startswith("scoreboard players test"):
 
 		#Scoreboard test
-		
 
-		tmp = re.findall(r'^scoreboard players test (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*) (\S+) ([0-9\*\-]+)(?: )?([0-9\*\-]+)?', command)
+
+		tmp = re.findall(r'^scoreboard players test (@[a-z][A-Za-z0-9=\.,_\-\!\{\}\(\)\[\]]*) (\S+) ([0-9\*\-]+)(?: )?([0-9\*\-]+)?', command)
 		if tmp:
 			selector = tmp[0][0]
 			tmp1 = []
@@ -665,14 +663,14 @@ def convert_command(gets):
 		if command.startswith("toggledownfall"):
 			#Toggledownfall to weather clear
 			command = re.sub(r'^toggledownfall', r'weather clear', command)
-		
+
 		elif command.startswith("gamemode"):
 			#Gamemode
 			command = re.sub(r'^gamemode (0|s)',r'gamemode survival',command)
 			command = re.sub(r'^gamemode (1|c)',r'gamemode creative',command)
 			command = re.sub(r'^gamemode (2|a)',r'gamemode adventure',command)
 			command = re.sub(r'^gamemode (3|sp)',r'gamemode spectator',command)
-		
+
 		elif command.startswith("difficulty"):
 
 			#Difficulty
@@ -680,18 +678,18 @@ def convert_command(gets):
 			command = re.sub(r'^difficulty (1|e)',r'difficulty easy',command)
 			command = re.sub(r'^difficulty (2|n)',r'difficulty normal',command)
 			command = re.sub(r'^difficulty (3|h)',r'difficulty hard',command)
-		
+
 		elif command.startswith("teleport"):
 			#Teleport to tp (Sorry if this will be confusing)
 			command = re.sub(r'^teleport',r'tp', command)
 
 		elif command.startswith("xp"):
 
-			command = re.sub(r'^xp ([\-0-9]+)L (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+)', r'xp add \2 \1 levels',command)
+			command = re.sub(r'^xp ([\-0-9]+)L (@[a-z][A-Za-z0-9=\.,_\-\!\{\}\(\)\[\]]*|[a-zA-Z0-9_\-\#]+)', r'xp add \2 \1 levels',command)
 			command = re.sub(r'^xp ([\-0-9]+)L', r'xp add @s \1 levels',command)
-			command = re.sub(r'^xp ([\-0-9]+) (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+)', r'xp add \2 \1 points',command)
+			command = re.sub(r'^xp ([\-0-9]+) (@[a-z][A-Za-z0-9=\.,_\-\!\{\}\(\)\[\]]*|[a-zA-Z0-9_\-\#]+)', r'xp add \2 \1 points',command)
 			command = re.sub(r'^xp ([\-0-9]+)', r'xp add @s \1 points',command)
-		
+
 		elif command.startswith("scoreboard teams"):
 			#Teams now
 			command = re.sub(r'^scoreboard teams', r'team', command)
@@ -717,31 +715,31 @@ def convert_command(gets):
 					command = re.sub(r'pl@ceh0ld3r', particles[tmp[0]], command)
 				else:
 					command = re.sub(r'pl@ceh0ld3r', tmp[0], command)
-		
+
 
 
 		#Give, clear and replaceitem
 		elif command.startswith("give"):
 
-			tmp = re.findall(r'^give (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9]+)?(?: )?([0-9]+)?(?: )?({.*})?', command)
+			tmp = re.findall(r'^give (@[a-z][A-Za-z0-9=\.,_\-\!\{\}\(\)\[\]]*|[a-zA-Z0-9_\-\#]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9]+)?(?: )?([0-9]+)?(?: )?({.*})?', command)
 			if tmp:
-				command = re.sub(r'^give (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9]+)?(?: )?([0-9]+)?(?: )?({.*})?', r'give \1 pl@ceh0ld3r \3', command)
+				command = re.sub(r'^give (@[a-z][A-Za-z0-9=\.,_\-\!\{\}\(\)\[\]]*|[a-zA-Z0-9_\-\#]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9]+)?(?: )?([0-9]+)?(?: )?({.*})?', r'give \1 pl@ceh0ld3r \3', command)
 				command = re.sub(r'pl@ceh0ld3r', change_item(tmp[0][1], tmp[0][3], tmp[0][4]), command)
 
 		elif command.startswith("clear"):
 
-			tmp = re.findall(r'^clear (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9\-\*]+)?(?: )?([0-9\-\*]+)?(?: )?({.*})?', command)
+			tmp = re.findall(r'^clear (@[a-z][A-Za-z0-9=\.,_\-\!\{\}\(\)\[\]]*|[a-zA-Z0-9_\-\#]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9\-\*]+)?(?: )?([0-9\-\*]+)?(?: )?({.*})?', command)
 			if tmp:
-				command = re.sub(r'^clear (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9\-\*]+)?(?: )?([0-9\-\*]+)?(?: )?({.*})?', r'clear \1 pl@ceh0ld3r pl@ceh0ld2r', command)
+				command = re.sub(r'^clear (@[a-z][A-Za-z0-9=\.,_\-\!\{\}\(\)\[\]]*|[a-zA-Z0-9_\-\#]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9\-\*]+)?(?: )?([0-9\-\*]+)?(?: )?({.*})?', r'clear \1 pl@ceh0ld3r pl@ceh0ld2r', command)
 				command = re.sub(r'pl@ceh0ld3r', change_item(tmp[0][1], tmp[0][2] if tmp[0][2] else "*", tmp[0][4]), command)
 				command = re.sub(r'pl@ceh0ld2r', tmp[0][3] if tmp[0][3].isdigit() else "", command)
 
 
 		elif command.startswith("replaceitem"):
 
-			tmp = re.findall(r'^replaceitem entity (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) slot\.([a-z0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9]+)?(?: )?([0-9]+)?(?: )?({.*})?', command)
+			tmp = re.findall(r'^replaceitem entity (@[a-z][A-Za-z0-9=\.,_\-\!\{\}\(\)\[\]]*|[a-zA-Z0-9_\-\#]+) slot\.([a-z0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9]+)?(?: )?([0-9]+)?(?: )?({.*})?', command)
 			if tmp:
-				command = re.sub(r'^replaceitem entity (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) slot\.([a-z0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9]+)?(?: )?([0-9]+)?(?: )?({.*})?', r'replaceitem entity \1 \2 pl@ceh0ld3r \4', command)
+				command = re.sub(r'^replaceitem entity (@[a-z][A-Za-z0-9=\.,_\-\!\{\}\(\)\[\]]*|[a-zA-Z0-9_\-\#]+) slot\.([a-z0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9]+)?(?: )?([0-9]+)?(?: )?({.*})?', r'replaceitem entity \1 \2 pl@ceh0ld3r \4', command)
 				command = re.sub(r'pl@ceh0ld3r', change_item(tmp[0][2], tmp[0][4], tmp[0][5]), command)
 			else:
 				tmp = re.findall(r'^replaceitem block ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) slot\.([a-z0-9\.]+) (?:minecraft\:)?([A-Za-z_]+)(?: )?([0-9]+)?(?: )?([0-9]+)?(?: )?({.*})?', command)
@@ -755,22 +753,22 @@ def convert_command(gets):
 		elif command.startswith("effect"):
 
 			#Effect ID's
-			tmp = re.findall(r'^effect (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) (?:minecraft\:)?(speed|slowness|haste|mining_fatigue|strength|instant_health|instant_damage|jump_boost|nausea|regeneration|resistance|fire_resistance|water_breathing|invisibility|blindness|night_vision|hunger|weakness|poison|wither|health_boost|absorption|saturation|glowing|levitation|luck|unluck)', command)
+			tmp = re.findall(r'^effect (@[a-z][A-Za-z0-9=\.,_\-\!\{\}\(\)\[\]]*|[a-zA-Z0-9_\-\#]+) (?:minecraft\:)?(speed|slowness|haste|mining_fatigue|strength|instant_health|instant_damage|jump_boost|nausea|regeneration|resistance|fire_resistance|water_breathing|invisibility|blindness|night_vision|hunger|weakness|poison|wither|health_boost|absorption|saturation|glowing|levitation|luck|unluck)', command)
 			if tmp:
-				command = re.sub(r'^effect (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) (?:minecraft\:)?(speed|slowness|haste|mining_fatigue|strength|instant_health|instant_damage|jump_boost|nausea|regeneration|resistance|fire_resistance|water_breathing|invisibility|blindness|night_vision|hunger|weakness|poison|wither|health_boost|absorption|saturation|glowing|levitation|luck|unluck)', r'effect \1 pl@ceh0ld3r', command)
+				command = re.sub(r'^effect (@[a-z][A-Za-z0-9=\.,_\-\!\{\}\(\)\[\]]*|[a-zA-Z0-9_\-\#]+) (?:minecraft\:)?(speed|slowness|haste|mining_fatigue|strength|instant_health|instant_damage|jump_boost|nausea|regeneration|resistance|fire_resistance|water_breathing|invisibility|blindness|night_vision|hunger|weakness|poison|wither|health_boost|absorption|saturation|glowing|levitation|luck|unluck)', r'effect \1 pl@ceh0ld3r', command)
 				command = re.sub(r'pl@ceh0ld3r', str(effect_id.index(tmp[0][1]) + 1), command)
 
 
 			#Effect clear
-			command = re.sub(r'^effect (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) clear', r'effect clear \1', command)
-			command = re.sub(r'^effect (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) ([0-9]+) 0(.*)', r'effect clear \1 \2', command)
+			command = re.sub(r'^effect (@[a-z][A-Za-z0-9=\.,_\-\!\{\}\(\)\[\]]*|[a-zA-Z0-9_\-\#]+) clear', r'effect clear \1', command)
+			command = re.sub(r'^effect (@[a-z][A-Za-z0-9=\.,_\-\!\{\}\(\)\[\]]*|[a-zA-Z0-9_\-\#]+) ([0-9]+) 0(.*)', r'effect clear \1 \2', command)
 			#Effect give
-			command = re.sub(r'^effect (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) ([0-9]+) ([1-9][0-9]*)', r'effect give \1 \2 \3', command)
-			command = re.sub(r'^effect (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) ([0-9]+)$', r'effect give \1 \2 30 0', command)
+			command = re.sub(r'^effect (@[a-z][A-Za-z0-9=\.,_\-\!\{\}\(\)\[\]]*|[a-zA-Z0-9_\-\#]+) ([0-9]+) ([1-9][0-9]*)', r'effect give \1 \2 \3', command)
+			command = re.sub(r'^effect (@[a-z][A-Za-z0-9=\.,_\-\!\{\}\(\)\[\]]*|[a-zA-Z0-9_\-\#]+) ([0-9]+)$', r'effect give \1 \2 30 0', command)
 
 			#Effect ID's
-			tmp = re.findall(r'^effect (give|clear) (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) ([0-9]+)', command)
-			command = re.sub(r'^effect (give|clear) (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) ([0-9]+)', r'effect \1 \2 pl@ceh0ld3r', command)
+			tmp = re.findall(r'^effect (give|clear) (@[a-z][A-Za-z0-9=\.,_\-\!\{\}\(\)\[\]]*|[a-zA-Z0-9_\-\#]+) ([0-9]+)', command)
+			command = re.sub(r'^effect (give|clear) (@[a-z][A-Za-z0-9=\.,_\-\!\{\}\(\)\[\]]*|[a-zA-Z0-9_\-\#]+) ([0-9]+)', r'effect \1 \2 pl@ceh0ld3r', command)
 			if tmp:
 				command = re.sub(r'pl@ceh0ld3r', 'minecraft:' + effect_id[int(tmp[0][2]) - 1], command)
 
@@ -838,12 +836,12 @@ def convert_command(gets):
 
 		elif command.startswith("entitydata"):
 			#Entitydata
-			tmp = re.findall(r'^entitydata (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) ({.+})', command)
-			command = re.sub(r'^entitydata (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) ({.+})', r'data merge entity \1 pl@ceh0ld3r', command)
+			tmp = re.findall(r'^entitydata (@[a-z][A-Za-z0-9=\.,_\-\!\{\}\(\)\[\]]*|[a-zA-Z0-9_\-\#]+) ({.+})', command)
+			command = re.sub(r'^entitydata (@[a-z][A-Za-z0-9=\.,_\-\!\{\}\(\)\[\]]*|[a-zA-Z0-9_\-\#]+) ({.+})', r'data merge entity \1 pl@ceh0ld3r', command)
 			if tmp:
 				command = re.sub(r'pl@ceh0ld3r', new_nbt(tmp[0][1]), command)
 
-			command = re.sub(r'entitydata (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) {}',r'data get entity \1', command)
+			command = re.sub(r'entitydata (@[a-z][A-Za-z0-9=\.,_\-\!\{\}\(\)\[\]]*|[a-zA-Z0-9_\-\#]+) {}',r'data get entity \1', command)
 
 		elif command.startswith("blockdata"):
 			#Blockdata
@@ -852,7 +850,7 @@ def convert_command(gets):
 			if tmp:
 				command = re.sub(r'pl@ceh0ld3r', new_nbt(tmp[0][1]), command)
 
-			command = re.sub(r'blockdata (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) {}',r'data get block \1', command)
+			command = re.sub(r'blockdata (@[a-z][A-Za-z0-9=\.,_\-\!\{\}\(\)\[\]]*|[a-zA-Z0-9_\-\#]+) {}',r'data get block \1', command)
 
 		elif command.startswith("testforblocks"):
 
@@ -861,7 +859,7 @@ def convert_command(gets):
 
 		elif command.startswith("testfor "):
 			#Testfor
-			command = re.sub(r'^testfor (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+)( {.*})?', r'if entity \1\2', command)
+			command = re.sub(r'^testfor (@[a-z][A-Za-z0-9=\.,_\-\!\{\}\(\)\[\]]*|[a-zA-Z0-9_\-\#]+)( {.*})?', r'if entity \1\2', command)
 
 		elif command.startswith("advancement"):
 			#Update advancement path
@@ -874,7 +872,7 @@ def convert_command(gets):
 					command = re.sub(r'^advancement (.*) ([A-Za-z0-9_\-]+):([A-Za-z0-9_\-/]+)', r'advancement \1 {}:{}/{}'.format(datapack, tmp[0][1].lower(), tmp[0][2].lower()), command)
 
 			#Advancement test
-			tmp = re.findall(r'^advancement test (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) ([a-z0-9_/:]+)(?: )?([a-z0-9_/:]+)?', command)
+			tmp = re.findall(r'^advancement test (@[a-z][A-Za-z0-9=\.,_\-\!\{\}\(\)\[\]]*|[a-zA-Z0-9_\-\#]+) ([a-z0-9_/:]+)(?: )?([a-z0-9_/:]+)?', command)
 			if tmp:
 				selector = tmp[0][0]
 				command = "if entity "
@@ -904,7 +902,7 @@ def convert_command(gets):
 				command = re.sub(r'^function ([A-Za-z0-9_\-]+):([A-Za-z0-9_\-/]+)', r'function {}:{}/{}'.format(datapack, tmp[0][0].lower(), tmp[0][1].lower()), command)
 
 
-		
+
 		#These do
 
 		#Rename structure paths
@@ -933,335 +931,351 @@ def convert_command(gets):
 	return command
 
 def convert(command):
-	global executelist
-	global tp_new_pos
-	global precommand
+	gets = command
 
-	precommand = ""
+	try:
+		global executelist
+		global tp_new_pos
+		global precommand
 
-	if command.startswith("/"):
-		command = command[1:]
+		precommand = ""
 
-
-	if re.findall(r'^([a-z])',command):
-		executelist = []
-		get_executes(command)
-
-		if tp_new_pos == False:
-			new_pos = False
-		else:
-			new_pos = True
-
-		tp_self = True #Used for detecting a tp command
-
-		for i in range(len(executelist) - 1):
-			if executelist[i].startswith("execute"):
-				execute = re.findall(r'^execute (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+)',executelist[i])[0]
-
-				if not execute[0].startswith("@s"):
-					new_pos = True
-					tp_self = False
+		if command.startswith("/"):
+			command = command[1:]
 
 
-				if execute[0] == "@s":
-					useas = False
-				else:
-					useas = True
+		if re.findall(r'^([a-z])',command):
+			executelist = []
+			get_executes(command)
 
-				if re.findall(r'^[~0]+ [~0]+ [~0]+$', execute[1]):
-					offset = False
-					useat = False
-				else:
-					offset = True
-					useat = True
+			if tp_new_pos == False:
+				new_pos = False
+			else:
+				new_pos = True
+
+			tp_self = True #Used for detecting a tp command
+
+			for i in range(len(executelist) - 1):
+				if executelist[i].startswith("execute"):
+					execute = re.findall(r'^execute (@[a-z][A-Za-z0-9=\.,_\-\!\{\}\(\)\[\]]*|[a-zA-Z0-9_\-\#]+) ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+)',executelist[i])[0]
+
+					if not execute[0].startswith("@s"):
+						new_pos = True
+						tp_self = False
 
 
-				if executelist[i + 1].startswith("execute"):
-					next_execute = re.findall(r'^execute (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+) ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+)',executelist[i + 1])[0]
+					if execute[0] == "@s":
+						useas = False
+					else:
+						useas = True
 
-					if re.findall(r'(dx=|dy=|dz=|c=|r=|rm=)', next_execute[0]) or next_execute[0].startswith("@p"):
+					if re.findall(r'^[~0]+ [~0]+ [~0]+$', execute[1]):
+						offset = False
+						useat = False
+					else:
+						offset = True
 						useat = True
 
 
-				elif executelist[i + 1].startswith("detect"):
-					next_execute = re.findall(r'^detect ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([a-zA-Z_]+) ([\S]+)',executelist[i + 1])[0]
-					useat = True
+					if executelist[i + 1].startswith("execute"):
+						next_execute = re.findall(r'^execute (@[a-z][A-Za-z0-9=\.,_\-\!\{\}\(\)\[\]]*|[a-zA-Z0-9_\-\#]+) ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+)',executelist[i + 1])[0]
+
+						if re.findall(r'(dx=|dy=|dz=|c=|r=|rm=)', next_execute[0]) or next_execute[0].startswith("@p"):
+							useat = True
 
 
-				elif re.findall(r'(~|dx=|dy=|dz=|c=|r=|rm=|@p)', executelist[i + 1]):
-					useat = True
-				elif executelist[i + 1].startswith("function"):
-					useat = True
+					elif executelist[i + 1].startswith("detect"):
+						next_execute = re.findall(r'^detect ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([a-zA-Z_]+) ([\S]+)',executelist[i + 1])[0]
+						useat = True
 
 
-
-
-
-
-
-
-				if new_pos == False:
-					useat = False
-				elif useat == True:
-					new_pos = False
-
-				#Set it
-				if useas == False and useat == False:
-					if offset == False:
-						executelist[i] = "" #Remove execute if it was only used for detecting a block for example
-					else:
-						executelist[i] = "offset {0}".format(execute[1])
-
-				elif useas == True and useat == False:
-					if offset == False:
-						executelist[i] = "as {0}".format(execute[0]) #No at if relative coordinates weren't used
-					else:
-						executelist[i] = "as {0} offset {1}".format(execute[0], execute[1]) #Same just with offset
-
-				elif useas == False and useat == True:
-
-					if offset == False:
-						executelist[i] = "at {0}".format(execute[0], execute[1]) #No at if relative coordinates weren't used
-					else:
-						executelist[i] = "at {0} offset {1}".format(execute[0], execute[1]) #Same just with offset
-
-				elif useas == True and useat == True:
-
-					if offset == False:
-						executelist[i] = "as {0} at @s".format(execute[0]) #Use everything. Not always needed but makes sure that it works for function commands for example.
-					else:
-						executelist[i] = "as {0} at @s offset {1}".format(execute[0], execute[1]) #Same just with offset
-
-
-
-
-
-			elif executelist[i].startswith("detect"):
-
-				tmp = re.findall(r'^detect ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([A-Za-z_]+) ([\S]+)', executelist[i])
-				executelist[i] = re.sub(r'^detect ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([A-Za-z_]+) ([\S]+)', r'if block \1 pl@ceh0ld3r', executelist[i])
-				if tmp:
-					executelist[i] = re.sub(r'pl@ceh0ld3r', change_block(tmp[0][1], tmp[0][2], ""), executelist[i])
-
-		executelist = [i for i in executelist if i != ""]
-
-		if tp_self == True and re.findall(r'^tp @s', executelist[-1]):
-			tp_new_pos = True
-
-		executelist[-1] = convert_command(executelist[-1])
-
-		tmp = re.findall(r'^function (\S+) (if|unless) (@[a-z][A-Za-z0-9=\.,_\-\!\[\]]*|[a-zA-Z0-9_\-\#]+)', executelist[-1])
-		if tmp:
-			executelist[-1] = "{0} entity {1}".format(tmp[0][1], tmp[0][2])
-			executelist += ["function {0}".format(tmp[0][0])]
-
-
-
-		if executelist[-1].startswith("if "):
-			command = "execute "+" ".join(executelist)
-		elif len(executelist) > 1:
-			command = "execute "+" ".join(executelist[:-1])+" run "+executelist[-1]
-		else:
-			command = executelist[-1]
+					elif re.findall(r'(~|dx=|dy=|dz=|c=|r=|rm=|@p)', executelist[i + 1]):
+						useat = True
+					elif executelist[i + 1].startswith("function"):
+						useat = True
 
 
 
 
 
 
-		#Selectors
-		tmp = re.findall(r'@([a-z])\[([A-Za-z0-9=\.,_\-\!\{\}]*)\]', command)
-		command = re.sub(r'@([a-z])\[([A-Za-z0-9=\.,_\-\!\{\}]*)\]', r'@\1[pl@ceh0ld3r]', command)
-		for match in tmp:
-			selector = match[1].split(",")
-
-			#Int coordinates to floats if needed
-			for i in range(len(selector)):
-				arg = selector[i].split("=")
-				if arg[0] in ["x","z"]:
-					selector[i] = "{}={}".format(arg[0],float(arg[1]) + 0.5)
-
-			selector_lm = ""
-			selector_l = ""
-
-			selector_rm = ""
-			selector_r = ""
-
-			selector_rxm = ""
-			selector_rx = ""
-
-			selector_rym = ""
-			selector_ry = ""
-
-			selector_scores = {}
 
 
-			#Others
-			n = len(selector)
-			for i in range(n):
-				arg = selector[i].split("=")
+					if new_pos == False:
+						useat = False
+					elif useat == True:
+						new_pos = False
 
-				#Gamemode
-				if arg[0] == "m":
-					if arg[1] in ["0","s"]:
-						arg[1] = "survival"
-					elif arg[1] in ["1","c"]:
-						arg[1] = "creative"
-					elif arg[1] in ["2","a"]:
-						arg[1] = "adventure"
-					elif arg[1] in ["3","sp"]:
-						arg[1] = "spectator"
-
-					selector[i] = "{}={}".format("gamemode", arg[1])
-
-				elif arg[0] == "type":
-					selector[i] = selector[i].lower()
-
-					#Limit
-				elif arg[0] == "c":
-					if match[0] != "r":
-						if int(arg[1]) < 0:
-							arg[1] = abs(int(arg[1]))
-							selector += ["sort=furthest"]
+					#Set it
+					if useas == False and useat == False:
+						if offset == False:
+							executelist[i] = "" #Remove execute if it was only used for detecting a block for example
 						else:
-							selector += ["sort=nearest"]
+							executelist[i] = "offset {0}".format(execute[1])
 
-					selector[i] = "{}={}".format("limit", arg[1])
-
-
-					#Level
-				elif arg[0] == "lm":
-					selector_lm = int(arg[1])
-					selector[i] = "UNUSED" #Uses UNUSED to prevent changing the list size while iterating
-				elif arg[0] == "l":
-					selector_l = int(arg[1])
-					selector[i] = "UNUSED"
-
-					#Distance
-				elif arg[0] == "rm":
-					selector_rm = int(arg[1])
-					selector[i] = "UNUSED"
-				elif arg[0] == "r":
-					selector_r = int(arg[1])
-					selector[i] = "UNUSED"
-
-					#X rotation
-				elif arg[0] == "rxm":
-					selector_rxm = int(arg[1])
-					selector[i] = "UNUSED"
-				elif arg[0] == "rx":
-					selector_rx = int(arg[1])
-					selector[i] = "UNUSED"
-
-					#Y rotation
-				elif arg[0] == "rym":
-					selector_rym = int(arg[1])
-					selector[i] = "UNUSED"
-				elif arg[0] == "ry":
-					selector_ry = int(arg[1])
-					selector[i] = "UNUSED"
-
-				#Scores
-				tmp = re.findall(r'^score_([A-Za-z0-9]+)(_min)?', arg[0])
-				if tmp:
-
-
-					if len(tmp[0][1]) == 0:
-
-						if tmp[0][0] in selector_scores and re.findall(r'^([0-9\-]+)..$', selector_scores[tmp[0][0]]):
-							
-							if arg[1] + ".." == selector_scores[tmp[0][0]]:
-								selector_scores[tmp[0][0]] = arg[1]
-							else:
-								selector_scores[tmp[0][0]] = selector_scores[tmp[0][0]] + arg[1]
-
+					elif useas == True and useat == False:
+						if offset == False:
+							executelist[i] = "as {0}".format(execute[0]) #No at if relative coordinates weren't used
 						else:
-							selector_scores[tmp[0][0]] = ".." + arg[1]
-					
-					else:
-						if tmp[0][0] in selector_scores and re.findall(r'^..([0-9\-]+)$', selector_scores[tmp[0][0]]):
-							
-							if ".." + arg[1] == selector_scores[tmp[0][0]]:
-								selector_scores[tmp[0][0]] = arg[1]
-							else:
-								selector_scores[tmp[0][0]] = arg[1] + selector_scores[tmp[0][0]]
+							executelist[i] = "as {0} offset {1}".format(execute[0], execute[1]) #Same just with offset
 
+					elif useas == False and useat == True:
+
+						if offset == False:
+							executelist[i] = "at {0}".format(execute[0], execute[1]) #No at if relative coordinates weren't used
 						else:
-							selector_scores[tmp[0][0]] = arg[1] + ".."
+							executelist[i] = "at {0} offset {1}".format(execute[0], execute[1]) #Same just with offset
 
-					selector[i] = "UNUSED"	
+					elif useas == True and useat == True:
 
-
-			#Range selectors
-			if selector_lm != "" or selector_l != "":
-				if selector_lm == selector_l:
-					selector += ["level={}".format(selector_lm)]
-				else:
-					selector += ["level={}..{}".format(selector_lm, selector_l)]
-
-			if selector_rm != "" or selector_r != "":
-				if selector_rm == selector_r:
-					selector += ["distance={}".format(selector_rm)]
-				else:
-					selector += ["distance={}..{}".format(selector_rm, selector_r)]
-
-			if selector_rxm != "" or selector_rx != "":
-				if selector_rxm == selector_rx:
-					selector += ["x_rotation={}".format(selector_rxm)]
-				else:
-					selector += ["x_rotation={}..{}".format(selector_rxm, selector_rx)]
-
-			if selector_rym != "" or selector_ry != "":
-				if selector_rym == selector_ry:
-					selector += ["y_rotation={}".format(selector_rym)]
-				else:
-					selector += ["y_rotation={}..{}".format(selector_rym, selector_ry)]
-
-			if not selector_scores == {}:
-
-				selector += ["scores={" + ",".join([i+"="+selector_scores[i] for i in selector_scores]) + "}"]
+						if offset == False:
+							executelist[i] = "as {0} at @s".format(execute[0]) #Use everything. Not always needed but makes sure that it works for function commands for example.
+						else:
+							executelist[i] = "as {0} at @s offset {1}".format(execute[0], execute[1]) #Same just with offset
 
 
 
-			selector = [i for i in selector if i != "UNUSED"]
-			command = re.sub(r'pl@ceh0ld3r', ",".join(selector), command, count=1)
-
-		#Scoreboard NBT selector
-		if "scoreboard" in command:
 
 
-			#scoreboard players tag
-			tmp = re.findall(r'scoreboard players tag @([a-z])(\[.*\])? (add|remove) ([\S]+) ({.*})', command)
-			command = re.sub(r'scoreboard players tag @([a-z])(\[.*\])? (add|remove) ([\S]+) ({.*})', r'tag @\1pl@ceh0ld3r \3 \4', command)
+				elif executelist[i].startswith("detect"):
+
+					tmp = re.findall(r'^detect ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([A-Za-z_]+) ([\S]+)', executelist[i])
+					executelist[i] = re.sub(r'^detect ([~\-0-9\.]+ [~\-0-9\.]+ [~\-0-9\.]+) (?:minecraft\:)?([A-Za-z_]+) ([\S]+)', r'if block \1 pl@ceh0ld3r', executelist[i])
+					if tmp:
+						executelist[i] = re.sub(r'pl@ceh0ld3r', change_block(tmp[0][1], tmp[0][2], ""), executelist[i])
+
+			executelist = [i for i in executelist if i != ""]
+
+			try:
+				if tp_self == True and re.findall(r'^tp @s', executelist[-1]):
+					tp_new_pos = True
+			except Exception as e:
+				print(e)
+				print(command)
+
+			executelist[-1] = convert_command(executelist[-1])
+
+			tmp = re.findall(r'^function (\S+) (if|unless) (@[a-z][A-Za-z0-9=\.,_\-\!\{\}\(\)\[\]]*|[a-zA-Z0-9_\-\#]+)', executelist[-1])
 			if tmp:
-				if len(tmp[0][1]) > 0:
-					command = re.sub(r'pl@ceh0ld3r', "[{0},nbt={1}]".format(tmp[0][1][1:-1], new_nbt(tmp[0][4])), command)
-				else:
-					command = re.sub(r'pl@ceh0ld3r', "[nbt={0}]".format(new_nbt(tmp[0][4])), command)
+				executelist[-1] = "{0} entity {1}".format(tmp[0][1], tmp[0][2])
+				executelist += ["function {0}".format(tmp[0][0])]
+
+
+
+			if executelist[-1].startswith("if "):
+				command = "execute "+" ".join(executelist)
+			elif len(executelist) > 1:
+				command = "execute "+" ".join(executelist[:-1])+" run "+executelist[-1]
 			else:
-				command = re.sub(r'scoreboard players tag', r'tag', command)
+				command = executelist[-1]
 
-			#scoreboard players set/add/remove
-			tmp = re.findall(r'scoreboard players (set|add|remove) @([a-z])(\[.*\])? ([\S]+) ([0-9]+) ({.*})', command)
-			command = re.sub(r'scoreboard players (set|add|remove) @([a-z])(\[.*\])? ([\S]+) ([0-9]+) ({.*})', r'scoreboard players \1 @\2pl@ceh0ld3r \4 \5', command)
-			if tmp:
-				if len(tmp[0][2]) > 0:
-					command = re.sub(r'pl@ceh0ld3r', "[{0},nbt={1}]".format(tmp[0][2][1:-1], new_nbt(tmp[0][5])), command)
+
+
+
+
+
+			#Selectors
+			tmp = re.findall(r'@([a-z])\[(\S*)\]', command)
+			command = re.sub(r'@([a-z])\[(\S*)\]', r'@\1[pl@ceh0ld3r]', command)
+			for match in tmp:
+				selector = match[1].split(",")
+
+				#Int coordinates to floats if needed
+				for i in range(len(selector)):
+					arg = selector[i].split("=")
+					if arg[0] in ["x","z"]:
+						selector[i] = "{}={}".format(arg[0],float(arg[1]) + 0.5)
+
+				selector_lm = ""
+				selector_l = ""
+
+				selector_rm = ""
+				selector_r = ""
+
+				selector_rxm = ""
+				selector_rx = ""
+
+				selector_rym = ""
+				selector_ry = ""
+
+				selector_scores = {}
+
+
+				#Others
+				n = len(selector)
+				for i in range(n):
+					arg = selector[i].split("=")
+
+					#Gamemode
+					if arg[0] == "m":
+						if arg[1] in ["0","s"]:
+							arg[1] = "survival"
+						elif arg[1] in ["1","c"]:
+							arg[1] = "creative"
+						elif arg[1] in ["2","a"]:
+							arg[1] = "adventure"
+						elif arg[1] in ["3","sp"]:
+							arg[1] = "spectator"
+
+						selector[i] = "{}={}".format("gamemode", arg[1])
+
+					elif arg[0] == "type":
+						selector[i] = selector[i].lower()
+
+						#Limit
+					elif arg[0] == "c":
+						if match[0] != "r":
+							if int(arg[1]) < 0:
+								arg[1] = abs(int(arg[1]))
+								selector += ["sort=furthest"]
+							else:
+								selector += ["sort=nearest"]
+
+						selector[i] = "{}={}".format("limit", arg[1])
+
+
+						#Level
+					elif arg[0] == "lm":
+						selector_lm = int(arg[1])
+						selector[i] = "UNUSED" #Uses UNUSED to prevent changing the list size while iterating
+					elif arg[0] == "l":
+						selector_l = int(arg[1])
+						selector[i] = "UNUSED"
+
+						#Distance
+					elif arg[0] == "rm":
+						selector_rm = int(arg[1])
+						selector[i] = "UNUSED"
+					elif arg[0] == "r":
+						selector_r = int(arg[1])
+						selector[i] = "UNUSED"
+
+						#X rotation
+					elif arg[0] == "rxm":
+						selector_rxm = int(arg[1])
+						selector[i] = "UNUSED"
+					elif arg[0] == "rx":
+						selector_rx = int(arg[1])
+						selector[i] = "UNUSED"
+
+						#Y rotation
+					elif arg[0] == "rym":
+						selector_rym = int(arg[1])
+						selector[i] = "UNUSED"
+					elif arg[0] == "ry":
+						selector_ry = int(arg[1])
+						selector[i] = "UNUSED"
+
+					#Scores
+					tmp = re.findall(r'^score_([A-Za-z0-9]+)(_min)?', arg[0])
+					if tmp:
+
+
+						if len(tmp[0][1]) == 0:
+
+							if tmp[0][0] in selector_scores and re.findall(r'^([0-9\-]+)..$', selector_scores[tmp[0][0]]):
+
+								if arg[1] + ".." == selector_scores[tmp[0][0]]:
+									selector_scores[tmp[0][0]] = arg[1]
+								else:
+									selector_scores[tmp[0][0]] = selector_scores[tmp[0][0]] + arg[1]
+
+							else:
+								selector_scores[tmp[0][0]] = ".." + arg[1]
+
+						else:
+							if tmp[0][0] in selector_scores and re.findall(r'^..([0-9\-]+)$', selector_scores[tmp[0][0]]):
+
+								if ".." + arg[1] == selector_scores[tmp[0][0]]:
+									selector_scores[tmp[0][0]] = arg[1]
+								else:
+									selector_scores[tmp[0][0]] = arg[1] + selector_scores[tmp[0][0]]
+
+							else:
+								selector_scores[tmp[0][0]] = arg[1] + ".."
+
+						selector[i] = "UNUSED"
+
+
+				#Range selectors
+				if selector_lm != "" or selector_l != "":
+					if selector_lm == selector_l:
+						selector += ["level={}".format(selector_lm)]
+					else:
+						selector += ["level={}..{}".format(selector_lm, selector_l)]
+
+				if selector_rm != "" or selector_r != "":
+					if selector_rm == selector_r:
+						selector += ["distance={}".format(selector_rm)]
+					else:
+						selector += ["distance={}..{}".format(selector_rm, selector_r)]
+
+				if selector_rxm != "" or selector_rx != "":
+					if selector_rxm == selector_rx:
+						selector += ["x_rotation={}".format(selector_rxm)]
+					else:
+						selector += ["x_rotation={}..{}".format(selector_rxm, selector_rx)]
+
+				if selector_rym != "" or selector_ry != "":
+					if selector_rym == selector_ry:
+						selector += ["y_rotation={}".format(selector_rym)]
+					else:
+						selector += ["y_rotation={}..{}".format(selector_rym, selector_ry)]
+
+				if not selector_scores == {}:
+
+					selector += ["scores={" + ",".join([i+"="+selector_scores[i] for i in selector_scores]) + "}"]
+
+
+
+				selector = [i for i in selector if i != "UNUSED"]
+				command = re.sub(r'pl@ceh0ld3r', ",".join(selector), command, count=1)
+
+			#Scoreboard NBT selector
+			if "scoreboard" in command:
+
+
+				#scoreboard players tag
+				tmp = re.findall(r'scoreboard players tag @([a-z])(\[.*\])? (add|remove) ([\S]+) ({.*})', command)
+				command = re.sub(r'scoreboard players tag @([a-z])(\[.*\])? (add|remove) ([\S]+) ({.*})', r'tag @\1pl@ceh0ld3r \3 \4', command)
+				if tmp:
+					if len(tmp[0][1]) > 0:
+						command = re.sub(r'pl@ceh0ld3r', "[{0},nbt={1}]".format(tmp[0][1][1:-1], new_nbt(tmp[0][4])), command)
+					else:
+						command = re.sub(r'pl@ceh0ld3r', "[nbt={0}]".format(new_nbt(tmp[0][4])), command)
 				else:
-					command = re.sub(r'pl@ceh0ld3r', "[nbt={0}]".format(new_nbt(tmp[0][5])), command)
+					command = re.sub(r'scoreboard players tag', r'tag', command)
 
-		#testfor NBT selector and execute command
-		if "if entity" in command:
+				#scoreboard players set/add/remove
+				tmp = re.findall(r'scoreboard players (set|add|remove) @([a-z])(\[.*\])? ([\S]+) ([0-9]+) ({.*})', command)
+				command = re.sub(r'scoreboard players (set|add|remove) @([a-z])(\[.*\])? ([\S]+) ([0-9]+) ({.*})', r'scoreboard players \1 @\2pl@ceh0ld3r \4 \5', command)
+				if tmp:
+					if len(tmp[0][2]) > 0:
+						command = re.sub(r'pl@ceh0ld3r', "[{0},nbt={1}]".format(tmp[0][2][1:-1], new_nbt(tmp[0][5])), command)
+					else:
+						command = re.sub(r'pl@ceh0ld3r', "[nbt={0}]".format(new_nbt(tmp[0][5])), command)
 
-			tmp = re.findall(r'if entity @([a-z])(\[.*\])? ({.*})', command)
-			command = re.sub(r'if entity @([a-z])(\[.*\])? ({.*})', r'if entity @\1pl@ceh0ld3r', command)
-			if tmp:
-				if len(tmp[0][1]) > 0:
-					command = re.sub(r'pl@ceh0ld3r', "[{0},nbt={1}]".format(tmp[0][1][1:-1], new_nbt(tmp[0][2])), command)
-				else:
-					command = re.sub(r'pl@ceh0ld3r', "[nbt={0}]".format(new_nbt(tmp[0][2])), command)
+			#testfor NBT selector and execute command
+			if "if entity" in command:
 
-	return precommand + command+"\n"
+				tmp = re.findall(r'if entity @([a-z])(\[.*\])? ({.*})', command)
+				command = re.sub(r'if entity @([a-z])(\[.*\])? ({.*})', r'if entity @\1pl@ceh0ld3r', command)
+				if tmp:
+					if len(tmp[0][1]) > 0:
+						command = re.sub(r'pl@ceh0ld3r', "[{0},nbt={1}]".format(tmp[0][1][1:-1], new_nbt(tmp[0][2])), command)
+					else:
+						command = re.sub(r'pl@ceh0ld3r', "[nbt={0}]".format(new_nbt(tmp[0][2])), command)
+
+
+
+	except Exception as inst:
+		print("[Error] Unknown error in {}".format(filename))
+		print(inst)
+
+		return gets + "\n"
+
+	return precommand + command + "\n"
+
 
 
 
@@ -1314,7 +1328,7 @@ def convert_advancement(adv):
 		except:
 			pass
 
-		
+
 		try:
 			adv['display']['icon']['item'] = re.findall(r'^[a-z0-9_]+', change_item(str(item).replace("minecraft:",""), str(data), ""))[0]
 			del adv['display']['icon']['data']
@@ -1335,7 +1349,7 @@ def convert_loot_tables(lt):
 	try:
 		for i in range(len(lt['pools'])):
 			for j in range(len(lt['pools'][i]['entries'])):
-				
+
 				try:
 					if lt['pools'][i]['entries'][j]['type'] == "item":
 
@@ -1439,7 +1453,7 @@ except:
 
 #Rename files to lowercase
 for path, dirs, files in os.walk( os.path.join(worldpath, "datapacks", datapack, "data"), topdown=False ):
-	
+
 	for file in files:
 
 		if file != file.lower():
@@ -1451,22 +1465,22 @@ for path, dirs, files in os.walk( os.path.join(worldpath, "datapacks", datapack,
 
 #Tags directory
 try:
-    os.makedirs(os.path.join(worldpath, "datapacks", datapack, "data", datapack, "tags", "blocks"))
+	os.makedirs(os.path.join(worldpath, "datapacks", datapack, "data", datapack, "tags", "blocks"))
 except OSError as e:
-    if e.errno != errno.EEXIST:
-        raise
+	if e.errno != errno.EEXIST:
+		raise
 
 try:
-    os.makedirs(os.path.join(worldpath, "datapacks", datapack, "data", datapack, "tags", "items"))
+	os.makedirs(os.path.join(worldpath, "datapacks", datapack, "data", datapack, "tags", "items"))
 except OSError as e:
-    if e.errno != errno.EEXIST:
-        raise
+	if e.errno != errno.EEXIST:
+		raise
 
 try:
-    os.makedirs(os.path.join(worldpath, "datapacks", datapack, "data", datapack, "tags", "functions"))
+	os.makedirs(os.path.join(worldpath, "datapacks", datapack, "data", datapack, "tags", "functions"))
 except OSError as e:
-    if e.errno != errno.EEXIST:
-        raise
+	if e.errno != errno.EEXIST:
+		raise
 
 # Put gameLoopFunction inside datapack
 try:
@@ -1555,7 +1569,7 @@ try:
 			nbtfile['data']['Objectives'][i]['CriteriaName'] = TAG_String(criteria)
 		else:
 			print("[Info] Objective \"{}\" contains a block/item name that cannot be translated".format(nbtfile['data']['Objectives'][i]['Name']))
-		
+
 
 	nbtfile.write_file(os.path.join(worldpath, "data", "scoreboard.dat"))
 except Exception as inst:
